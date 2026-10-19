@@ -237,3 +237,14 @@ py -3 -m unittest -v test_core.py test_flow.py
 `run.bat` → option `4`-ও একই test চালায়। এগুলোতে কোনো network, browser বা
 real credential লাগে না। একটা আসল Windows/Chromium run এখনও দরকার —
 নিচের "Limitations" দেখুন।
+
+## Prebuilt ZIP (`dist/`)
+
+`capture/checker/dist/dizkover-checker-2.1.zip` হলো এই checker-এর তৈরি করা
+release zip (data/ বা credential ছাড়া)। Direct download:
+
+```text
+https://github.com/rajuvbygyuiythh/dfdgfhghg45454/raw/arena/f5e63558-dfdgfhghg45454/capture/checker/dist/dizkover-checker-2.1.zip
+```
+
+Checksum: `capture/checker/dist/SHA256SUMS.txt`।
