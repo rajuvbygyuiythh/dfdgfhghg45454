@@ -7,12 +7,12 @@ things stand without re-asking the user. The AUTO block below is refreshed by
 after every meaningful change** (newest last). Never rewrite old entries.
 
 <!-- AUTO:BEGIN -->
-_Auto status 2026-10-17. Do not edit this block by hand._
+_Auto status 2026-10-19. Do not edit this block by hand._
 
-- Source fingerprint: `c150d85200276f54…`
+- Source fingerprint: `7cdd97b86335f10a…`
 - Browser options: `rod`, `chromedp`, `show_mode`
 - Capture tool: v1.2.1
-- Last verification: **PASS** (PASS 13, FAIL 0, BLOCKED 0) — BLOCKED is not PASS; see `verification-output/report.json`
+- Last verification: **BLOCKED** (PASS 3, FAIL 0, BLOCKED 10) — BLOCKED is not PASS; see `verification-output/report.json`
 <!-- AUTO:END -->
 
 ## Decision log

@@ -8,21 +8,21 @@ with `AGENTS.md` (locked scope/rules) and `docs/PROJECT_MEMORY.md`
 (decisions and current state).
 
 <!-- AUTO:BEGIN -->
-_Auto-generated 2026-10-17 by `scripts/project-map.cjs`. Do not edit this block by hand._
+_Auto-generated 2026-10-19 by `scripts/project-map.cjs`. Do not edit this block by hand._
 
 ## Source inventory
 
-- Total source files: **204** (1215.6 KiB, excluding runtime/private data)
+- Total source files: **205** (1223.7 KiB, excluding runtime/private data)
 
 | Area | Files | Size |
 |---|---:|---:|
 | `internal/` | 97 | 483.1 KiB |
+| `(root files)` | 25 | 204.6 KiB |
 | `capture/` | 25 | 114.3 KiB |
-| `(root files)` | 24 | 200.7 KiB |
 | `docs/` | 18 | 98.2 KiB |
 | `apitest/` | 12 | 99.3 KiB |
 | `scripts/` | 11 | 42.5 KiB |
-| `cmd/` | 9 | 122.1 KiB |
+| `cmd/` | 9 | 126.2 KiB |
 | `tests/` | 8 | 55.5 KiB |
 
 ## Internal Go packages
