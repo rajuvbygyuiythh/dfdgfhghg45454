@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChitChat Bot — Dashboard Architecture & Mapping</title>
+<style>
+  :root{
+    --bg:#111312; --panel:#191c19; --panel-2:#20241f; --panel-3:#282d26;
+    --line:#39402f; --line-soft:#2b3126;
+    --text:#eef2e8; --muted:#a9b3a2;
+    --accent:#83cb73; --accent-dim:#4d7c46;
+    --blue:#6fa8dc; --violet:#b08ee6; --amber:#d9b74d; --red:#d36a6a; --cyan:#5fc7c0;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Segoe UI",Inter,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
+  body{background-image:radial-gradient(circle at 15% -5%,rgba(131,203,115,.09),transparent 45%),radial-gradient(circle at 85% 0%,rgba(111,168,220,.07),transparent 40%);background-repeat:no-repeat}
+  a{color:var(--accent)}
+  code{font-family:var(--mono);font-size:.86em;background:#0c0e0c;border:1px solid var(--line-soft);border-radius:4px;padding:.1em .35em;color:#cfe6c6;white-space:nowrap}
+  .wrap{max-width:1240px;margin:0 auto;padding:38px 26px 90px}
+
+  /* ---------- header ---------- */
+  .masthead{display:flex;justify-content:space-between;gap:28px;align-items:flex-start;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:8px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-size:33px;line-height:1.15;margin:10px 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);max-width:62ch;font-size:14.5px;margin:0}
+  .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;min-width:210px}
+  .meta b{color:var(--text);font-weight:600}
+  .badge{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    padding:3px 9px;border-radius:999px;border:1px solid var(--accent-dim);color:var(--accent);
+    background:rgba(131,203,115,.08);margin-top:8px;text-transform:uppercase}
+
+  /* ---------- nav ---------- */
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 34px}
+  nav.toc a{font-size:12px;text-decoration:none;color:var(--muted);border:1px solid var(--line-soft);
+    background:var(--panel);padding:5px 11px;border-radius:999px}
+  nav.toc a:hover{color:var(--text);border-color:var(--accent-dim)}
+
+  /* ---------- sections ---------- */
+  section{margin-bottom:58px;scroll-margin-top:20px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+  .sec-num{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--accent-dim);
+    border-radius:6px;padding:2px 8px;background:rgba(131,203,115,.07)}
+  h2{font-size:21px;margin:0;letter-spacing:-.01em}
+  .sec-note{color:var(--muted);font-size:13.5px;margin:0 0 22px 0;max-width:95ch}
+
+  /* ---------- generic cards ---------- */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  @media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+  /* ---------- layer diagram ---------- */
+  .layers{display:flex;flex-direction:column;gap:0}
+  .layer{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);position:relative}
+  .layer + .layer{margin-top:34px}
+  .layer + .layer::before{content:"";position:absolute;left:38px;top:-34px;height:34px;width:2px;
+    background:linear-gradient(var(--accent-dim),var(--accent))}
+  .layer + .layer::after{content:"▼";position:absolute;left:32px;top:-13px;color:var(--accent);font-size:12px}
+  .layer-tag{position:absolute;right:14px;top:-11px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+    padding:2px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);color:var(--muted)}
+  .layer h3{margin:0 0 3px;font-size:14.5px}
+  .layer p{margin:0 0 12px;font-size:12.5px;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:#0e110e;border:1px solid var(--line-soft);
+    border-radius:6px;padding:5px 9px;color:#cfe6c6}
+  .chip.blue{border-color:#2f4a5f;color:#a8d0ee;background:#0d1519}
+  .chip.violet{border-color:#453764;color:#ccb6f2;background:#140f1c}
+  .chip.amber{border-color:#5a4a1e;color:#e8d18a;background:#171308}
+  .chip.red{border-color:#5c2f2f;color:#eeadad;background:#1a0f0f}
+  .chip.cyan{border-color:#26504d;color:#a7e5e1;background:#0c1615}
+  .lane-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:12px 0 7px}
+
+  /* ---------- flow rows ---------- */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
+  .step{flex:1 1 150px;min-width:135px;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:9px;padding:10px 12px;position:relative}
+  .step .n{font-family:var(--mono);font-size:10px;color:var(--accent)}
+  .step .t{font-size:12.5px;font-weight:600;margin:2px 0 3px}
+  .step .d{font-size:11px;color:var(--muted);line-height:1.45}
+  .arrow{align-self:center;color:var(--accent-dim);font-size:16px;flex:0 0 10px;text-align:center}
+  @media(max-width:900px){.arrow{display:none}}
+  .step.hl{border-color:var(--accent-dim);background:linear-gradient(180deg,rgba(131,203,115,.09),var(--panel-2))}
+  .step.warn{border-color:#5a4a1e;background:linear-gradient(180deg,rgba(217,183,77,.09),var(--panel-2))}
+  .step.bad{border-color:#5c2f2f;background:linear-gradient(180deg,rgba(211,106,106,.09),var(--panel-2))}
+
+  /* ---------- panel map cards ---------- */
+  .panel-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .panel-card > header{display:flex;align-items:center;gap:10px;padding:12px 16px;
+    background:linear-gradient(90deg,rgba(131,203,115,.12),transparent);border-bottom:1px solid var(--line-soft)}
+  .panel-card > header .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 0 3px rgba(131,203,115,.14)}
+  .panel-card > header h3{margin:0;font-size:14px}
+  .panel-card > header span{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:12.3px}
+  th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:#151815}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#1b1f19}
+  td code{white-space:normal}
+  .muted{color:var(--muted)}
+  .tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:999px;
+    border:1px solid var(--line);color:var(--muted);background:#0f120f}
+
+  /* ---------- storage tree ---------- */
+  .tree{font-family:var(--mono);font-size:12.2px;line-height:1.85;white-space:pre;overflow-x:auto;
+    background:#0c0e0c;border:1px solid var(--line);border-radius:12px;padding:18px 20px;color:#c8d6c2}
+  .tree .dir{color:var(--cyan)}
+  .tree .file{color:var(--text)}
+  .tree .cm{color:#78846f;font-style:italic}
+  .tree .del{color:var(--red)}
+  .tree .keep{color:var(--accent)}
+
+  /* ---------- event flow ---------- */
+  .ev{display:grid;grid-template-columns:1fr 64px 1fr;gap:0;align-items:center;margin-bottom:10px}
+  .ev .src,.ev .dst{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:12px}
+  .ev .name{font-family:var(--mono);font-size:10.5px;color:var(--amber);text-align:center}
+  .ev .wire{height:1px;background:linear-gradient(90deg,var(--line),var(--amber));position:relative;margin:0 4px}
+  .ev .wire::after{content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid var(--amber);
+    border-top:4px solid transparent;border-bottom:4px solid transparent}
+
+  /* ---------- invariants ---------- */
+  .inv{display:flex;gap:11px;padding:11px 14px;background:var(--panel);border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:8px;font-size:12.7px;margin-bottom:9px}
+  .inv .k{font-family:var(--mono);color:var(--accent);font-size:11px;min-width:22px}
+  .gap{border-left-color:var(--red)}
+  .gap .k{color:var(--red)}
+  .sev{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:1px 7px;border-radius:999px;
+    border:1px solid;margin-left:auto;white-space:nowrap;align-self:flex-start}
+  .sev.m{color:var(--amber);border-color:#5a4a1e}
+  .sev.l{color:var(--muted);border-color:var(--line)}
+
+  footer{border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:12px;
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  @media print{
+    body{background:#fff;color:#000}
+    .card,.panel-card,.layer,.step,.tree,.inv{background:#fff;border-color:#bbb}
+    nav.toc{display:none}
+    section{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <div class="eyebrow">Architecture &amp; Mapping Design</div>
+      <h1>ChitChat Bot — Dashboard</h1>
+      <p class="sub">Go + Wails v2 desktop dashboard. এই পোস্টারটা দেখায় ড্যাশবোর্ড কতগুলো স্তরে গঠিত, প্রতিটা বাটন কোন Go function-এ যায়, data কোথায় থাকে, আর event কীভাবে ফিরে আসে। <b>কোনো source code পরিবর্তন করা হয়নি</b> — এটা reference design।</p>
+      <div class="badge">Reference · v1 base · 2026-10-19</div>
+    </div>
+    <div class="meta">
+      <div><b>UI</b> Wails v2 / WebView2</div>
+      <div><b>Frontend</b> plain JS (no framework)</div>
+      <div><b>Backend</b> Go 1.25 · 11 packages</div>
+      <div><b>Bindings</b> 17 public methods</div>
+      <div><b>State</b> Badger + JSON files</div>
+      <div><b>Target</b> Windows x64</div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <a href="#layers">01 Layers</a>
+    <a href="#boot">02 Boot</a>
+    <a href="#paths">03 Runtime paths</a>
+    <a href="#panels">04 Panel mapping</a>
+    <a href="#botloop">05 Bot loop</a>
+    <a href="#state">06 State contract</a>
+    <a href="#storage">07 Storage</a>
+    <a href="#events">08 Events</a>
+    <a href="#rules">09 Invariants</a>
+    <a href="#gaps">10 Gaps</a>
+  </nav>
+
+  <!-- ================= 01 LAYERS ================= -->
+  <section id="layers">
+    <div class="sec-head"><span class="sec-num">01</span><h2>স্তরবিন্যাস · Layer map</h2></div>
+    <p class="sec-note">চারটা স্তর। উপরের স্তর নিচের স্তরকে <b>শুধু contract</b> দিয়ে ডাকে — UI কখনো <code>internal/</code> import করে না, তাই backend বদলালেও UI ভাঙে না যদি <code>model.UISnapshot</code> অপরিবর্তিত থাকে।</p>
+
+    <div class="layers">
+
+      <div class="layer">
+        <span class="layer-tag">L1 · UI</span>
+        <h3>Presentation — WebView2 (embedded)</h3>
+        <p>একই HTML একবার embed হয় <code>//go:embed cmd/chitchatui/frontend/dist</code>। কোনো bundler নেই, কোনো framework নেই। state একটাই object (<code>app.js:1</code>)।</p>
+        <div class="chips">
+          <span class="chip blue">index.html · 5 tabs</span>
+          <span class="chip blue">app.js · DOM render</span>
+          <span class="chip blue">styles.css · dark theme</span>
+          <span class="chip blue">window.go.main.App.*</span>
+          <span class="chip">poll 3s stats</span>
+          <span class="chip">poll 1s transcript</span>
+        </div>
+      </div>
+
+      <div class="layer">
+        <span class="layer-tag">L2 · BRIDGE</span>
+        <h3>Wails binding layer — <code>app.go</code> (type App)</h3>
+        <p>শুধু এই layer-ই Go। ১৭টা exported method = পুরো backend API। ভিতরে in-memory state: <code>running</code>, <code>runID</code>, <code>botCancel</code>, <code>activeWorkers</code>, <code>chatFeed</code>, license flags।</p>
+        <div class="lane-label">settings API</div>
+        <div class="chips">
+          <span class="chip">GetInitialState</span><span class="chip">SaveBrowserSettings</span>
+          <span class="chip">SaveMessageSettings</span><span class="chip">SaveProxySettings</span>
+          <span class="chip">SaveGeneralSettings</span><span class="chip">ClearLogs</span>
+        </div>
+        <div class="lane-label">actions API</div>
+        <div class="chips">
+          <span class="chip violet">StartBot</span><span class="chip violet">StopBot</span>
+          <span class="chip violet">RunBrowser</span><span class="chip violet">CleanProfiles</span>
+          <span class="chip violet">LoadMessageFolder</span><span class="chip violet">OpenEVAChatDataFolder</span>
+          <span class="chip violet">TestProxyEntries</span><span class="chip violet">TestEVAChatAI</span>
+          <span class="chip violet">GetLiveChatSnapshot</span>
+        </div>
+      </div>
+
+      <div class="layer">
+        <span class="layer-tag">L3 · CORE</span>
+        <h3>Domain packages — <code>internal/*</code></h3>
+        <p>প্রতিটা package একটাই দায়িত্ব। কোনোটাই UI জানে না; সবাই <code>model</code> struct শেয়ার করে।</p>
+        <div class="grid g4" style="gap:10px">
+          <div class="card" style="padding:10px 12px">
+            <div class="chip violet" style="margin-bottom:6px">workerplan</div>
+            <div class="muted" style="font-size:11.5px">কোন profile-এ কোন worker, কোন proxy। discovery + round-robin assignment।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip violet" style="margin-bottom:6px">bot</div>
+            <div class="muted" style="font-size:11.5px">API worker loop: relationship · DM · match · reply engine (single/folder/eva).</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip violet" style="margin-bottom:6px">browser</div>
+            <div class="muted" style="font-size:11.5px">rod / chromedp backend interface, DOM chat reader, login capture।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip violet" style="margin-bottom:6px">proxy</div>
+            <div class="muted" style="font-size:11.5px">parse · rotator · CONNECT relay · auth · test result।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip cyan" style="margin-bottom:6px">uistore</div>
+            <div class="muted" style="font-size:11.5px">Badger: settings + UI log history।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip cyan" style="margin-bottom:6px">store</div>
+            <div class="muted" style="font-size:11.5px">atomic JSON read/write helpers।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip amber" style="margin-bottom:6px">applog</div>
+            <div class="muted" style="font-size:11.5px">logs.txt + credential redaction।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip red" style="margin-bottom:6px">license</div>
+            <div class="muted" style="font-size:11.5px">WMI hardware key → remote verify।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip" style="margin-bottom:6px">api</div>
+            <div class="muted" style="font-size:11.5px">chitchat HTTP client (nonce, headers)।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip" style="margin-bottom:6px">model</div>
+            <div class="muted" style="font-size:11.5px">shared struct + JSON tags = UI contract।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip" style="margin-bottom:6px">runtimeassets</div>
+            <div class="muted" style="font-size:11.5px">bundled WebView2 / Chromium path resolution।</div>
+          </div>
+          <div class="card" style="padding:10px 12px">
+            <div class="chip" style="margin-bottom:6px">uistore/logic</div>
+            <div class="muted" style="font-size:11.5px">live chat feed — <code>home_chat.go</code> (memory only)।</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <span class="layer-tag">L4 · EXTERNAL</span>
+        <h3>বাইরের সেবা ও ফাইলসিস্টেম</h3>
+        <p>ড্যাশবোর্ড নিজে কোনো নেটওয়ার্ক লজিক লেখে না — সব core package থেকে যায়।</p>
+        <div class="chips">
+          <span class="chip">app.chitchat.gg <span class="muted">(browser UI)</span></span>
+          <span class="chip">api.chitchat.gg <span class="muted">(worker HTTP)</span></span>
+          <span class="chip amber">license-api…workers.dev</span>
+          <span class="chip">OpenAI-compatible AI <span class="muted">(optional)</span></span>
+          <span class="chip cyan">data/ <span class="muted">(Badger + JSON + TXT)</span></span>
+          <span class="chip cyan">logs.txt</span>
+          <span class="chip red">proxy providers</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 02 BOOT ================= -->
+  <section id="boot">
+    <div class="sec-head"><span class="sec-num">02</span><h2>স্টার্টআপ ক্রম · Boot sequence</h2></div>
+    <p class="sec-note">License check UI-এর <b>আগে</b> হয় — invalid হলে shell কখনো দেখায় না। Frontend ৫০ বার (২০০ms gap) binding-এর জন্য retry করে, কারণ WebView2-এ bridge inject হতে সময় লাগে।</p>
+
+    <div class="flow">
+      <div class="step"><div class="n">01</div><div class="t">main()</div><div class="d">resolveDataDir → <code>&lt;exe&gt;/data</code></div></div>
+      <div class="arrow">▶</div>
+      <div class="step"><div class="n">02</div><div class="t">applog</div><div class="d">logs.txt + stderr dual writer, redaction armed</div></div>
+      <div class="arrow">▶</div>
+      <div class="step"><div class="n">03</div><div class="t">NewApp()</div><div class="d">Badger open · seedDefaults()</div></div>
+      <div class="arrow">▶</div>
+      <div class="step warn"><div class="n">04</div><div class="t">License gate</div><div class="d">WMI key → remote verify · 24h ticker</div></div>
+      <div class="arrow">▶</div>
+      <div class="step"><div class="n">05</div><div class="t">wails.Run()</div><div class="d">1280×820 · embed assets · bind App</div></div>
+      <div class="arrow">▶</div>
+      <div class="step"><div class="n">06</div><div class="t">DOMContentLoaded</div><div class="d">bootstrap() → bindTabs/Forms/Actions/Events</div></div>
+      <div class="arrow">▶</div>
+      <div class="step hl"><div class="n">07</div><div class="t">GetInitialState()</div><div class="d">এক packet-এ সব settings + stats + logs</div></div>
+      <div class="arrow">▶</div>
+      <div class="step hl"><div class="n">08</div><div class="t">Two timers</div><div class="d">3s stats · 1s transcript</div></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <div class="lane-label" style="margin-top:0">Lifecycle hooks</div>
+        <table>
+          <tbody>
+            <tr><td><code>OnStartup</code></td><td class="muted">ctx সেট → <code>log("Wails UI ready.")</code></td></tr>
+            <tr><td><code>OnShutdown</code></td><td class="muted">StopBot() → uiStore.Close()</td></tr>
+            <tr><td><code>Bind</code></td><td class="muted">App struct → JS proxy generate</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="lane-label" style="margin-top:0">Failure paths</div>
+        <table>
+          <tbody>
+            <tr><td class="tag">bad DB</td><td class="muted">NewApp error → <code>log.Fatal</code></td></tr>
+            <tr><td class="tag">no HW id</td><td class="muted">license_invalid=true → overlay</td></tr>
+            <tr><td class="tag">no bridge</td><td class="muted">50 retry × 200ms → "Failed to connect to Wails bindings."</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 03 RUNTIME PATHS ================= -->
+  <section id="paths">
+    <div class="sec-head"><span class="sec-num">03</span><h2>তিনটা আলাদা runtime path</h2></div>
+    <p class="sec-note">Start Bot, Fresh Login, Show Mode — তিনটাই আলাদা code path, আলাদা lifecycle। এদের মধ্যে একটাই মিল: সবাই একই <code>data/profiles/</code> tree ব্যবহার করে।</p>
+
+    <div class="grid g3">
+      <div class="card">
+        <div class="chip violet" style="margin-bottom:10px">A · Bot workers</div>
+        <div class="flow" style="flex-direction:column;gap:7px">
+          <div class="step" style="flex:1 1 auto"><div class="t">StartBot</div><div class="d">running guard, ctx + cancel</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">buildBotConfigs</div><div class="d">settings → bot.Config</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">DiscoverProfileWorkers</div><div class="d"><code>data/profiles/*/login_info*.json</code></div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">AssignProfileWorkers</div><div class="d">proxy = <code>index % n</code></div></div>
+          <div class="step hl" style="flex:1 1 auto"><div class="t">goroutine × N</div><div class="d">bot.Run(ctx, cfg)</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">HTTP API loop</div><div class="d">relationships → DM → match → reply</div></div>
+        </div>
+        <div class="lane-label">শেষ হয়</div>
+        <div class="muted" style="font-size:11.5px">Stop (ctx cancel) অথবা সব worker শেষ → <code>ui:running=false</code></div>
+      </div>
+
+      <div class="card">
+        <div class="chip" style="margin-bottom:10px">B · Fresh login</div>
+        <div class="flow" style="flex-direction:column;gap:7px">
+          <div class="step" style="flex:1 1 auto"><div class="t">RunBrowser(settings,1–5)</div><div class="d">validateBrowserRun</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">OS temp dir</div><div class="d">repo-র বাইরে — dev watcher এড়াতে</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">backend.Start</div><div class="d">visible browser, manual login</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">captureFreshLogin</div><div class="d">cookie/token লুপে পড়ে</div></div>
+          <div class="step hl" style="flex:1 1 auto"><div class="t">login_info_&lt;uid&gt;_&lt;ts&gt;_&lt;n&gt;.json</div><div class="d">save → profile-এর ভিতরে</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">cleanup</div><div class="d">temp dir delete (5 retry)</div></div>
+        </div>
+        <div class="lane-label">গুরুত্বপূর্ণ</div>
+        <div class="muted" style="font-size:11.5px">login capture bot চালু করে না — শুধু credential সংরক্ষণ করে।</div>
+      </div>
+
+      <div class="card">
+        <div class="chip cyan" style="margin-bottom:10px">C · Show Mode</div>
+        <div class="flow" style="flex-direction:column;gap:7px">
+          <div class="step" style="flex:1 1 auto"><div class="t">same as B</div><div class="d">+ <code>LiveChat=true</code>, headless forced off</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">runLiveChat</div><div class="d">newLiveResponder (mode অনুযায়ী)</div></div>
+          <div class="step hl" style="flex:1 1 auto"><div class="t">DOM only</div><div class="d">কোনো WebSocket / API নয়</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">liveRunner.step</div><div class="d">read rows → delay → type → send → Skip/START click</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">homeChatFeed</div><div class="d">bounded transcript (500 × 12)</div></div>
+          <div class="step" style="flex:1 1 auto"><div class="t">Home panel</div><div class="d">User: / Bot: rows</div></div>
+        </div>
+        <div class="lane-label">শেষ হয়</div>
+        <div class="muted" style="font-size:11.5px">User browser window বন্ধ করলে → session "(ended)"।</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 04 PANEL MAPPING ================= -->
+  <section id="panels">
+    <div class="sec-head"><span class="sec-num">04</span><h2>UI → Binding → Go · প্যানেল ভিত্তিক mapping</h2></div>
+    <p class="sec-note">ড্যাশবোর্ডের প্রতিটা control-এর ঠিকানা। বাঁ থেকে ডানে: কী চাপলে → কোন JS function → কোন binding → কোন Go function (file:line)।</p>
+
+    <div class="grid g2">
+
+      <div class="panel-card">
+        <header><span class="dot"></span><h3>Home</h3><span>live · stats</span></header>
+        <table>
+          <thead><tr><th>Control</th><th>JS</th><th>Binding</th><th>Go</th></tr></thead>
+          <tbody>
+            <tr><td><code>start-bot</code></td><td class="muted">bindActions</td><td><code>StartBot</code></td><td class="muted">app.go:597</td></tr>
+            <tr><td><code>stop-bot</code></td><td class="muted">bindActions</td><td><code>StopBot</code></td><td class="muted">app.go:675</td></tr>
+            <tr><td><code>clean-profiles</code></td><td class="muted">bindActions</td><td><code>CleanProfiles</code></td><td class="muted">app.go:578</td></tr>
+            <tr><td><code>refresh-state</code></td><td class="muted">bindActions</td><td><code>GetInitialState</code></td><td class="muted">app.go:129</td></tr>
+            <tr><td><code>clear-logs</code></td><td class="muted">bindActions</td><td><code>ClearLogs</code></td><td class="muted">app.go:464</td></tr>
+            <tr><td><code>chat-session</code></td><td class="muted">bindEvents</td><td><code>GetLiveChatSnapshot</code></td><td class="muted">app.go:1144</td></tr>
+            <tr><td>8 stat capsules</td><td class="muted">renderHomeStats</td><td><span class="tag">3s timer</span></td><td class="muted">app.go:183</td></tr>
+            <tr><td>chat transcript</td><td class="muted">renderChatTranscript</td><td><span class="tag">1s timer</span></td><td class="muted">home_chat.go:241</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-card">
+        <header><span class="dot" style="background:var(--amber);box-shadow:0 0 0 3px rgba(217,183,77,.14)"></span><h3>Proxy</h3><span>network</span></header>
+        <table>
+          <thead><tr><th>Control</th><th>JS</th><th>Binding</th><th>Go</th></tr></thead>
+          <tbody>
+            <tr><td><code>proxy-enabled</code></td><td class="muted">form submit</td><td><code>SaveProxySettings</code></td><td class="muted">app.go:426</td></tr>
+            <tr><td><code>proxy-entries</code></td><td class="muted">form submit</td><td><code>SaveProxySettings</code></td><td class="muted">app.go:426</td></tr>
+            <tr><td><code>proxy-default-scheme</code></td><td class="muted">proxyInputLines</td><td><span class="tag">client-side</span></td><td class="muted">—</td></tr>
+            <tr><td><code>test-proxy</code></td><td class="muted">testProxyEntries</td><td><code>TestProxyEntries</code></td><td class="muted">app.go:416</td></tr>
+            <tr><td>result table</td><td class="muted">testProxyEntries</td><td><span class="tag">return value</span></td><td class="muted">proxy/testproxy.go:22</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:10px 14px;border-top:1px solid var(--line-soft)">
+          <div class="muted" style="font-size:11.5px">Test rules: <b>max 20 lines</b> · 4 concurrent · 12s/proxy · target <code>https://app.chitchat.gg</code> · failure → provider message + hint।</div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <header><span class="dot" style="background:var(--violet);box-shadow:0 0 0 3px rgba(176,142,230,.14)"></span><h3>Message</h3><span>engine choice</span></header>
+        <table>
+          <thead><tr><th>Control</th><th>JS</th><th>Binding</th><th>Go</th></tr></thead>
+          <tbody>
+            <tr><td>mode radios</td><td class="muted">setChatMode</td><td><span class="tag">local</span></td><td class="muted">—</td></tr>
+            <tr><td>Save Messages</td><td class="muted">form submit</td><td><code>SaveMessageSettings</code></td><td class="muted">app.go:384</td></tr>
+            <tr><td><code>load-folder-btn</code></td><td class="muted">bindForms</td><td><code>LoadMessageFolder</code></td><td class="muted">app.go:486</td></tr>
+            <tr><td><code>clean-loaded-btn</code></td><td class="muted">bindForms</td><td><code>ClearLoadedMessages</code></td><td class="muted">app.go:473</td></tr>
+            <tr><td><code>open-evachat-folder</code></td><td class="muted">bindForms</td><td><code>OpenEVAChatDataFolder</code></td><td class="muted">app.go:537</td></tr>
+            <tr><td><code>evachat-ai-test-btn</code></td><td class="muted">bindForms</td><td><code>TestEVAChatAI</code></td><td class="muted">app.go:556</td></tr>
+            <tr><td>AI 3 fields</td><td class="muted">evaAISettings</td><td><span class="tag">payload</span></td><td class="muted">model/ui.go:44</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:10px 14px;border-top:1px solid var(--line-soft)">
+          <div class="muted" style="font-size:11.5px">
+            <b>single</b> → logic.go:976 &nbsp;·&nbsp; <b>folder</b> → random sequence &nbsp;·&nbsp; <b>eva_chat_flow</b> → logic.go:1146 + optional AI text &nbsp;·&nbsp; <b>keyword</b> legacy → logic.go:1328
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <header><span class="dot" style="background:var(--blue);box-shadow:0 0 0 3px rgba(111,168,220,.14)"></span><h3>Browser</h3><span>launch</span></header>
+        <table>
+          <thead><tr><th>Control</th><th>JS</th><th>Binding</th><th>Go</th></tr></thead>
+          <tbody>
+            <tr><td>01 Rod · Run</td><td class="muted">runBrowserOption</td><td rowspan="3"><code>RunBrowser</code></td><td rowspan="3" class="muted">app.go:305 → 338</td></tr>
+            <tr><td>02 ChromeDP · Run</td><td class="muted">runBrowserOption</td></tr>
+            <tr><td>03 Show Mode · Run</td><td class="muted">runBrowserOption</td></tr>
+            <tr><td><code>browser-profile</code></td><td class="muted">runBrowserOption</td><td><span class="tag">arg</span></td><td class="muted">safeProfileName 858</td></tr>
+            <tr><td><code>fresh-browser-count</code></td><td class="muted">runBrowserOption</td><td><span class="tag">arg</span></td><td class="muted">validate 311</td></tr>
+            <tr><td><code>browser-headless</code></td><td class="muted">runBrowserOption</td><td><span class="tag">arg</span></td><td class="muted">Show Mode → forced false</td></tr>
+            <tr><td>status line</td><td class="muted">browserStatus</td><td><code>ui:log</code> + regex</td><td class="muted">app.go:1131</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:10px 14px;border-top:1px solid var(--line-soft)">
+          <div class="muted" style="font-size:11.5px">Show Mode আসলে একটা <b>preset</b> — backend আসলে <code>rod</code>, সঙ্গে <code>LiveChat=true</code>।</div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <header><span class="dot" style="background:var(--cyan);box-shadow:0 0 0 3px rgba(95,199,192,.14)"></span><h3>Setting</h3><span>timing</span></header>
+        <table>
+          <thead><tr><th>Field group</th><th>Go field</th><th>কোথায় লাগে</th></tr></thead>
+          <tbody>
+            <tr><td>Poll min/max</td><td><code>PollMin/Max</code></td><td class="muted">cycle wait</td></tr>
+            <tr><td>Action min/max</td><td><code>ActionMin/Max</code></td><td class="muted">action-এর মাঝে</td></tr>
+            <tr><td>Reply delay min/max</td><td><code>ReplyDelay*</code></td><td class="muted">reply-এর আগে (Show Mode-ও)</td></tr>
+            <tr><td>Skip timeout min/max</td><td><code>MatchReplyTimeout*</code></td><td class="muted">partner reply অপেক্ষা</td></tr>
+            <tr><td>Chat closed wait</td><td><code>MatchCloseWait*</code></td><td class="muted">chat শেষ হলে wait</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:10px 14px;border-top:1px solid var(--line-soft)">
+          <div class="muted" style="font-size:11.5px">সব field একসাথে যায় <code>SaveGeneralSettings</code> (app.go:450) → <code>buildBotConfigs</code> (app.go:747)।</div>
+        </div>
+      </div>
+
+      <div class="panel-card" style="grid-column:1/-1">
+        <header><span class="dot" style="background:var(--red);box-shadow:0 0 0 3px rgba(211,106,106,.14)"></span><h3>License overlay</h3><span>gate</span></header>
+        <table>
+          <thead><tr><th>Trigger</th><th>Go</th><th>UI আচরণ</th></tr></thead>
+          <tbody>
+            <tr><td>startup verify fail</td><td class="muted">NewApp → license.VerifyLicense</td><td class="muted">shell hide, overlay show, hardware key readonly + Copy</td></tr>
+            <tr><td>24h re-check fail</td><td class="muted">ticker → <code>ui:license_invalid</code></td><td class="muted">live overlay, reason text</td></tr>
+            <tr><td>network error</td><td class="muted">client timeout 10s</td><td class="muted">"network error: …" → overlay</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 05 BOT LOOP ================= -->
+  <section id="botloop">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Bot engine · worker loop</h2></div>
+    <p class="sec-note">একটা worker = একটা logged-in account। লুপটা রৈখিক নয় — কাজ না পেলে match-এ যায়, match পেলে সাথে সাথে আবার cycle শুরু করে (delay ছাড়া)।</p>
+
+    <div class="card">
+      <div class="flow">
+        <div class="step"><div class="n">start</div><div class="t">bot.Run</div><div class="d">backend validate · paths · login</div></div>
+        <div class="arrow">▶</div>
+        <div class="step"><div class="n">auth</div><div class="t">loadSavedLogin</div><div class="d">token নেই → browser login</div></div>
+        <div class="arrow">▶</div>
+        <div class="step"><div class="n">id</div><div class="t">currentUserID</div><div class="d">না পেলে worker stop</div></div>
+        <div class="arrow">▶</div>
+        <div class="step"><div class="n">reg</div><div class="t">registerBotUser</div><div class="d">bot_registry.json</div></div>
+        <div class="arrow">▶</div>
+        <div class="step"><div class="n">ws</div><div class="t">realtime listener</div><div class="d">socket events</div></div>
+      </div>
+
+      <div style="margin:22px 0 8px" class="lane-label">loop body</div>
+      <div class="flow">
+        <div class="step hl"><div class="n">1</div><div class="t">runCycle</div><div class="d">relationships → accept → DM conversations</div></div>
+        <div class="arrow">▶</div>
+        <div class="step"><div class="n">2</div><div class="t">claim targets</div><div class="d">multi-worker একই user ধরবে না</div></div>
+        <div class="arrow">▶</div>
+        <div class="step"><div class="n">3</div><div class="t">processDMAutoResponses</div><div class="d">mode অনুযায়ী reply</div></div>
+        <div class="arrow">▶</div>
+        <div class="step warn"><div class="n">?</div><div class="t">workDone == false</div><div class="d">→ matchAndChat</div></div>
+        <div class="arrow">▶</div>
+        <div class="step"><div class="n">4</div><div class="t">waitForNextCycle</div><div class="d">Poll min..max</div></div>
+        <div class="arrow">↻</div>
+        <div class="step bad"><div class="n">exit</div><div class="t">401 / 403</div><div class="d">errLoginExpired → worker stop</div></div>
+      </div>
+
+      <div class="lane-label">reply engine নির্বাচন</div>
+      <div class="grid g3">
+        <div class="card" style="background:var(--panel-2)">
+          <div class="chip" style="margin-bottom:6px">single / folder</div>
+          <div class="muted" style="font-size:11.7px"><b>executeMatchChatSequence</b><br>sentCount → sequence[step] · <code>%username%</code> render</div>
+        </div>
+        <div class="card" style="background:var(--panel-2)">
+          <div class="chip violet" style="margin-bottom:6px">eva_chat_flow</div>
+          <div class="muted" style="font-size:11.7px"><b>executeMatchEVAChat</b><br>stateful TXT state machine + optional AI text layer</div>
+        </div>
+        <div class="card" style="background:var(--panel-2)">
+          <div class="chip amber" style="margin-bottom:6px">keyword (legacy)</div>
+          <div class="muted" style="font-size:11.7px"><b>executeMatchKeywordChatSequence</b><br>UI-তে নেই · শুধু পুরনো settings migration</div>
+        </div>
+      </div>
+
+      <div class="lane-label" style="margin-top:18px">state write</div>
+      <div class="chips">
+        <span class="chip">SentMessageCounts[id]++</span>
+        <span class="chip">SnapTgSentCount++</span>
+        <span class="chip">SkippedUsersCount++</span>
+        <span class="chip">SeenMessages</span>
+        <span class="chip">sequence index</span>
+        <span class="chip cyan">→ data/profiles/&lt;p&gt;/bot_state.json</span>
+      </div>
+      <div class="muted" style="font-size:11.7px;margin-top:8px">Home-এর সব সংখ্যা <b>এই একটা ফাইল</b> থেকেই আসে — UI নিজে কোনো count বানায় না।</div>
+    </div>
+  </section>
+
+  <!-- ================= 06 STATE ================= -->
+  <section id="state">
+    <div class="sec-head"><span class="sec-num">06</span><h2>State contract · UI কী পায়</h2></div>
+    <p class="sec-note">একটাই packet — <code>model.UISnapshot</code>। এটা বদলালে UI কোডও বদলাতে হবে; এটাই একমাত্র hard contract।</p>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="lane-label" style="margin-top:0">UISnapshot (app.go:129)</div>
+        <table>
+          <tbody>
+            <tr><td><code>running</code></td><td class="muted">bool · pill state</td></tr>
+            <tr><td><code>license_*</code></td><td class="muted">invalid · key · reason</td></tr>
+            <tr><td><code>home</code></td><td class="muted">8 stat counters</td></tr>
+            <tr><td><code>browser</code></td><td class="muted">profile · backend · headless · live_chat</td></tr>
+            <tr><td><code>message</code></td><td class="muted">mode · sequence · usernames · loaded_sequences · AI config</td></tr>
+            <tr><td><code>proxy</code></td><td class="muted">enabled · entries</td></tr>
+            <tr><td><code>general</code></td><td class="muted">10 timing fields</td></tr>
+            <tr><td><code>browser_options</code></td><td class="muted">3 options (key · label · description)</td></tr>
+            <tr><td><code>logs</code></td><td class="muted">≤ 200 entries</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="lane-label" style="margin-top:0">HomeStats — কোথা থেকে হিসাব</div>
+        <table>
+          <tbody>
+            <tr><td>Bot accounts</td><td class="muted"><code>max(workers, running+dead)</code></td></tr>
+            <tr><td>Running</td><td class="muted"><code>len(activeWorkers)</code></td></tr>
+            <tr><td>User send</td><td class="muted">username line count</td></tr>
+            <tr><td>Traffic users</td><td class="muted">unique userID (all bot_state)</td></tr>
+            <tr><td>Messages sent</td><td class="muted">Σ max per (account,user)</td></tr>
+            <tr><td>snap/tg/user</td><td class="muted">Σ SnapTgSentCount</td></tr>
+            <tr><td>Dead accounts</td><td class="muted">account status scan</td></tr>
+            <tr><td>Skip</td><td class="muted">Σ SkippedUsersCount</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="lane-label" style="margin-top:0">Live chat snapshot — bounded, memory only</div>
+      <div class="flow">
+        <div class="step hl"><div class="t">version</div><div class="d">monotonic — পুরনো response বাদ</div></div>
+        <div class="step"><div class="t">sessions[]</div><div class="d">id · label · active · dropped</div></div>
+        <div class="step"><div class="t">messages[]</div><div class="d">id · role(user|bot) · text · order</div></div>
+        <div class="step warn"><div class="t">limit</div><div class="d">500 msg/conversation · 12 conversation</div></div>
+        <div class="step bad"><div class="t">restart</div><div class="d">পূর্ণ মুছে যায় (disk-এ নেই)</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 07 STORAGE ================= -->
+  <section id="storage">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Storage map · data/ tree</h2></div>
+    <p class="sec-note">সব runtime data একটাই folder tree-তে। <span style="color:var(--red)">লাল</span> = Clean মুছে ফেলে, <span style="color:var(--accent)">সবুজ</span> = Clean রাখে।</p>
+
+    <div class="tree"><span class="cm">&lt;exe dir&gt;/</span>
+├─ <span class="file">logs.txt</span>                       <span class="cm">← applog, redaction armed, data-র বাইরে</span> <span class="keep">[keep]</span>
+├─ <span class="dir">WebView2/</span>  <span class="dir">Chromium/</span>          <span class="cm">← optional bundled runtime</span>
+└─ <span class="dir">data/</span>
+   ├─ <span class="dir">ui/badger/</span>                  <span class="cm">← uistore</span> <span class="keep">[keep]</span>
+   │    <span class="file">settings/browser</span> · <span class="file">settings/message</span>
+   │    <span class="file">settings/proxy</span>   · <span class="file">settings/general</span>
+   │    <span class="file">logs/&lt;seq&gt;</span>               <span class="cm">← UI history (Clear Logs এটাই মুছে)</span>
+   ├─ <span class="dir">profiles/&lt;profile&gt;/</span>         <span class="del">[delete on Clean]</span>
+   │    <span class="file">login_info.json</span>            <span class="cm">← persistent login</span>
+   │    <span class="file">login_info_&lt;uid&gt;_&lt;ts&gt;_&lt;n&gt;.json</span> <span class="cm">← fresh capture</span>
+   │    <span class="file">bot_state.json</span>            <span class="cm">← counts · seen · sequence index</span>
+   │    <span class="file">relationships_ids.json</span>    <span class="cm">← derived</span>
+   │    <span class="file">dm_user_ids.json</span>          <span class="cm">← derived</span>
+   │    <span class="file">dm_conversations.json</span>     <span class="cm">← derived</span>
+   │    <span class="file">all_user_ids.json</span>         <span class="cm">← derived</span>
+   ├─ <span class="dir">eva_chat/</span>                   <span class="keep">[keep — user-edited]</span>
+   │    <span class="dir">input/</span>    <span class="file">*.txt</span>   <span class="file">middle_chat/*.txt</span>   <span class="cm">← triggers</span>
+   │    <span class="dir">output/</span>   <span class="file">*.txt</span>   <span class="file">middle_chat/*.txt</span>   <span class="cm">← reply pools</span>
+   │    <span class="file">persona.txt</span> · <span class="file">countries.txt</span> · <span class="file">README.txt</span>
+   ├─ <span class="file">bot_registry.json</span>          <span class="cm">← userID → worker claim</span> <span class="del">[delete on Clean]</span>
+   ├─ <span class="dir">tmp/</span>     <span class="del">[delete on Clean]</span>
+   └─ <span class="dir">fresh-runs/</span> <span class="del">[delete on Clean]</span>
+
+<span class="cm">(browser temp profile → OS %TEMP%, repo-র ভিতরে নয় — Wails dev watcher restart এড়াতে)</span></div>
+
+    <div class="grid g3" style="margin-top:14px">
+      <div class="card">
+        <div class="chip red" style="margin-bottom:8px">Clean যা মুছে</div>
+        <div class="muted" style="font-size:12px">profiles/ · tmp/ · fresh-runs/ · bot_registry.json<br><br>রক্ষা: <code>pathInside()</code> guard — data-এর বাইরের path কখনো ছোঁবে না।</div>
+      </div>
+      <div class="card">
+        <div class="chip" style="margin-bottom:8px;border-color:var(--accent-dim);color:var(--accent)">Clean যা রাখে</div>
+        <div class="muted" style="font-size:12px">Badger settings + log history · eva_chat TXT · logs.txt · browser runtime</div>
+      </div>
+      <div class="card">
+        <div class="chip amber" style="margin-bottom:8px">Guard</div>
+        <div class="muted" style="font-size:12px">Bot running থাকলে Clean সম্পূর্ণ blocked — UI-তেও button disabled।</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 08 EVENTS ================= -->
+  <section id="events">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Event flow · Go → UI</h2></div>
+    <p class="sec-note">Event শুধু <b>latency কমায়</b> — source of truth সবসময় poll। Missed event এক poll cycle-এ repair হয়ে যায়।</p>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="ev">
+          <div class="src">emitStatus()<div class="muted" style="font-size:10.5px">app.go:1120</div></div>
+          <div class="wire"></div>
+          <div class="dst"><span class="name">ui:running</span><br><span class="muted" style="font-size:11px">setRunning → pill + Clean disable</span></div>
+        </div>
+        <div class="ev">
+          <div class="src">log()<div class="muted" style="font-size:10.5px">app.go:1131</div></div>
+          <div class="wire"></div>
+          <div class="dst"><span class="name">ui:log</span><br><span class="muted" style="font-size:11px">Browser status (regex `[p fresh n/m]`)</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ev">
+          <div class="src">homeChatFeed<div class="muted" style="font-size:10.5px">home_chat.go</div></div>
+          <div class="wire"></div>
+          <div class="dst"><span class="name">ui:chat_changed</span><br><span class="muted" style="font-size:11px">coalesced snapshot fetch</span></div>
+        </div>
+        <div class="ev">
+          <div class="src">license ticker<div class="muted" style="font-size:10.5px">24h</div></div>
+          <div class="wire"></div>
+          <div class="dst"><span class="name">ui:license_invalid</span><br><span class="muted" style="font-size:11px">overlay + reason + key</span></div>
+        </div>
+        <div class="ev">
+          <div class="src">ClearLogs()<div class="muted" style="font-size:10.5px">app.go:464</div></div>
+          <div class="wire"></div>
+          <div class="dst"><span class="name">ui:logs_cleared</span><br><span class="muted" style="font-size:11px">log area reset</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="lane-label" style="margin-top:0">Pull / push নিয়ম</div>
+      <div class="flow">
+        <div class="step"><div class="t">stats</div><div class="d">pull only · 3s · শুধু number বদলায়</div></div>
+        <div class="step"><div class="t">transcript</div><div class="d">pull 1s + push hint · version guard</div></div>
+        <div class="step"><div class="t">running</div><div class="d">push + snapshot-এও থাকে</div></div>
+        <div class="step"><div class="t">logs</div><div class="d">push, ≤200 in snapshot</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 09 INVARIANTS ================= -->
+  <section id="rules">
+    <div class="sec-head"><span class="sec-num">09</span><h2>Design invariants · ভাঙা যাবে না</h2></div>
+    <p class="sec-note">এই নিয়মগুলো কোড-কমেন্ট, <code>AGENTS.md</code> আর <code>docs/</code> থেকে নেওয়া — নতুন feature যোগ করার সময় এগুলোর বাইরে যাওয়া যাবে না।</p>
+
+    <div class="inv"><span class="k">01</span><span><b>Credential কখনো log-এ যাবে না।</b> <span class="muted">applog.Redact + frontend শুধু error stack পাঠায়, invocation args নয়।</span></span></div>
+    <div class="inv"><span class="k">02</span><span><b>Message render-এ <code>innerHTML</code> নয়।</b> <span class="muted">শুধু <code>textContent</code> + <code>pre-wrap</code> — message-এ markup থাকতে পারে।</span></span></div>
+    <div class="inv"><span class="k">03</span><span><b>Clean শুধু data/ এর ভিতরে।</b> <span class="muted">প্রতিটা target <code>pathInside()</code> দিয়ে যাচাই হয়।</span></span></div>
+    <div class="inv"><span class="k">04</span><span><b>Show Mode = DOM-only।</b> <span class="muted">কোনো WebSocket frame বা undocumented API নয় — শুধু যা human দেখে।</span></span></div>
+    <div class="inv"><span class="k">05</span><span><b>Bot running থাকলে Clean blocked</b> <span class="muted">(backend error + UI disabled)।</span></span></div>
+    <div class="inv"><span class="k">06</span><span><b>Settings refresh unsaved form মুছবে না।</b> <span class="muted"><code>browserFormLoaded</code> guard।</span></span></div>
+    <div class="inv"><span class="k">07</span><span><b>Proxy assignment deterministic</b> <span class="muted">— <code>index % n</code>, random নয়; তাই restart-এ একই worker একই proxy পায়।</span></span></div>
+    <div class="inv"><span class="k">08</span><span><b>Temp browser data repo-র বাইরে</b> <span class="muted">এবং প্রতিটা path-এ cleanup defer করা।</span></span></div>
+    <div class="inv"><span class="k">09</span><span><b>Stats-এর একমাত্র source <code>bot_state.json</code>।</b> <span class="muted">UI নিজে কোনো count অনুমান করে না।</span></span></div>
+  </section>
+
+  <!-- ================= 10 GAPS ================= -->
+  <section id="gaps">
+    <div class="sec-head"><span class="sec-num">10</span><h2>Known gaps · এখনো ঠিক করা হয়নি</h2></div>
+    <p class="sec-note">কোড অপরিবর্তিত — এগুলো শুধু চিহ্নিত। কোনটা আগে ধরব, সেটা আপনার সিদ্ধান্ত।</p>
+
+    <div class="inv gap"><span class="k">A1</span><span><b><code>cmd/chitchatui/</code> পুরনো duplicate।</b> <span class="muted">root <code>app.go</code>-তেই আসল dashboard (license, live chat, <code>TestProxyEntries</code>)। ওই folder build করলে ভাঙা UI হবে — root build ঠিক আছে।</span></span><span class="sev m">MEDIUM</span></div>
+    <div class="inv gap"><span class="k">A2</span><span><b>License key enter করার path নেই।</b> <span class="muted">input <code>readonly</code>, শুধু Copy — invalid হলে user নিজে কিছু করতে পারে না।</span></span><span class="sev m">MEDIUM</span></div>
+    <div class="inv gap"><span class="k">A3</span><span><b>License verify single point of failure।</b> <span class="muted">remote API down হলে app overlay-এ আটকে যায় — offline grace নেই।</span></span><span class="sev m">MEDIUM</span></div>
+    <div class="inv gap"><span class="k">A4</span><span><b><code>live_chat</code> flag persist হয়ে থাকে।</b> <span class="muted">Show Mode শেষ হলেও saved browser settings-এ থেকে যায়।</span></span><span class="sev l">LOW</span></div>
+    <div class="inv gap"><span class="k">A5</span><span><b>প্রতি 3s-এ পুরো UISnapshot।</b> <span class="muted">settings + 200 log টানা হয়, অথচ দরকার শুধু stats।</span></span><span class="sev l">LOW</span></div>
+    <div class="inv gap"><span class="k">A6</span><span><b><code>RunFreshBrowsers</code> binding unused।</b> <span class="muted">UI <code>RunBrowser</code> ব্যবহার করে — dead API।</span></span><span class="sev l">LOW</span></div>
+    <div class="inv gap"><span class="k">A7</span><span><b><code>bot_accounts = max(workers, running+dead)</code>।</b> <span class="muted">Dead account worker count-এ ধরা হয় না → সংখ্যা বিভ্রান্তিকর হতে পারে।</span></span><span class="sev l">LOW</span></div>
+    <div class="inv gap"><span class="k">A8</span><span><b>প্রতি poll-এ সব <code>bot_state.json</code> পড়া হয়।</b> <span class="muted">profile বেশি হলে CPU খরচ বাড়ে — cache দরকার।</span></span><span class="sev l">LOW</span></div>
+  </section>
+
+  <footer>
+    <div><b>ChitChat Bot — Dashboard Architecture &amp; Mapping</b> · reference document · source unchanged</div>
+    <div>companion: <code>docs/DASHBOARD_ARCHITECTURE_MAP.md</code> (text form) · <code>docs/PROJECT_MAP.md</code></div>
+  </footer>
+
+</div>
+</body>
+</html>
