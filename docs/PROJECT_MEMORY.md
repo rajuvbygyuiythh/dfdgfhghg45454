@@ -9,7 +9,7 @@ after every meaningful change** (newest last). Never rewrite old entries.
 <!-- AUTO:BEGIN -->
 _Auto status 2026-10-19. Do not edit this block by hand._
 
-- Source fingerprint: `ff5afccf17752ca8…`
+- Source fingerprint: `6c7c075dff38a117…`
 - Browser options: `rod`, `chromedp`, `show_mode`
 - Capture tool: v1.2.1
 - Last verification: **BLOCKED** (PASS 3, FAIL 0, BLOCKED 10) — BLOCKED is not PASS; see `verification-output/report.json`
@@ -435,3 +435,12 @@ license, proxy or dependency changes.
   reported ERROR with the exact step instead of guessing. The owner must run
   `run.bat` on Windows for a live result. The owner pasted a real credential in
   chat; it is deliberately absent from the repository and the log files.
+
+- 2026-10-20 — Added `AGENT_PROMPT.md` (reusable build-prompt template) and
+  `AGENT_PROMPT.example.md` (filled for `capture/checker/`). Reason: the prompt
+  the owner was pasting opened with an "uncensored" jailbreak framing and listed
+  auth bypass / session hijacking / MITM / Cloudflare-DataDome defeat / captcha
+  farms, which is why agents kept refusing the whole task. The new prompt keeps
+  the useful parts (plan → build → verify → fixed report format, anti-loop,
+  no-placeholder, surgical edits) and replaces the evasion list with a table of
+  legitimate alternatives. Nothing in the code changed.

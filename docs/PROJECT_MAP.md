@@ -12,13 +12,13 @@ _Auto-generated 2026-10-19 by `scripts/project-map.cjs`. Do not edit this block 
 
 ## Source inventory
 
-- Total source files: **220** (1322.3 KiB, excluding runtime/private data)
+- Total source files: **222** (1333.0 KiB, excluding runtime/private data)
 
 | Area | Files | Size |
 |---|---:|---:|
 | `internal/` | 97 | 483.1 KiB |
 | `capture/` | 40 | 212.8 KiB |
-| `(root files)` | 25 | 204.6 KiB |
+| `(root files)` | 27 | 215.4 KiB |
 | `docs/` | 18 | 98.2 KiB |
 | `apitest/` | 12 | 99.3 KiB |
 | `scripts/` | 11 | 42.5 KiB |
