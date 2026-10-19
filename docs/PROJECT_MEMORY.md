@@ -9,7 +9,7 @@ after every meaningful change** (newest last). Never rewrite old entries.
 <!-- AUTO:BEGIN -->
 _Auto status 2026-10-19. Do not edit this block by hand._
 
-- Source fingerprint: `8fd475967587d8ca…`
+- Source fingerprint: `ff5afccf17752ca8…`
 - Browser options: `rod`, `chromedp`, `show_mode`
 - Capture tool: v1.2.1
 - Last verification: **BLOCKED** (PASS 3, FAIL 0, BLOCKED 10) — BLOCKED is not PASS; see `verification-output/report.json`
