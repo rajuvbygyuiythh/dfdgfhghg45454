@@ -7,12 +7,12 @@ things stand without re-asking the user. The AUTO block below is refreshed by
 after every meaningful change** (newest last). Never rewrite old entries.
 
 <!-- AUTO:BEGIN -->
-_Auto status 2026-10-17. Do not edit this block by hand._
+_Auto status 2026-10-19. Do not edit this block by hand._
 
-- Source fingerprint: `c150d85200276f54…`
+- Source fingerprint: `0198efcd2543630d…`
 - Browser options: `rod`, `chromedp`, `show_mode`
 - Capture tool: v1.2.1
-- Last verification: **PASS** (PASS 13, FAIL 0, BLOCKED 0) — BLOCKED is not PASS; see `verification-output/report.json`
+- Last verification: **BLOCKED** (PASS 3, FAIL 0, BLOCKED 10) — BLOCKED is not PASS; see `verification-output/report.json`
 <!-- AUTO:END -->
 
 ## Decision log
@@ -399,3 +399,21 @@ license, proxy or dependency changes.
   `logs.txt` stays at source root (runtime), and Go/config/test files stay in
   `package main` to keep Wails bindings intact. `npm run verify` PASS 13/13
   after the move; root proxy install/build and run were smoke-tested.
+
+- 2026-10-19 — Standalone Dizkover account checker completed under
+  `capture/checker/` (Python + Playwright, outside the desktop runtime and not
+  imported by the bot). Root cause of the uploaded logs' `Total: 44 | Valid: 0
+  | Error: 44` was a hard `input[name="_csrf"]` gate: the captured real login
+  POST carries only `LoginForm[user_name]` / `LoginForm[user_password]`, so the
+  check aborted before trying. The gate is removed (the real form submits any
+  token the page renders); CAPTCHA detection now looks only for a visible
+  challenge instead of the always-present reCAPTCHA script; `networkidle`
+  replaced with DOM + result polling; Python 3.14 uses a Proactor `loop_factory`
+  instead of the deprecated policy call; proxy health is logged from both
+  requests and a real Chromium context; errors record the exact step and save
+  screenshot/HTML artifacts; passwords stay out of console/logs. Runtime files
+  live in ignored `capture/checker/data/`. Verified with `py_compile`, 25 pure
+  unit tests (`test_core.py`) and 7 fake-page flow tests (`test_flow.py`); a live
+  login/browser run was NOT executed (no credentials/browser in the verification
+  environment), so real account results remain unverified until the user runs
+  `run.bat`.

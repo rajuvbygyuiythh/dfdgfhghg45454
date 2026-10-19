@@ -1,0 +1,10 @@
+# One proxy per line. Comment lines are ignored.
+#
+# Supported formats:
+#   1.2.3.4:8080
+#   user:pass@1.2.3.4:8080
+#   http://1.2.3.4:8080
+#   socks5://user:pass@1.2.3.4:1080
+#
+# Every row is health-checked before any account runs. Only working rows are
+# used; proxy errors are printed in data/logs.txt together with the exact step.

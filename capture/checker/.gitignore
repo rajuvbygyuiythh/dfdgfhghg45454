@@ -1,0 +1,4 @@
+# Runtime data: accounts, proxies, cookies, logs, screenshots.
+data/
+__pycache__/
+*.pyc

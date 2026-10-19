@@ -99,3 +99,16 @@ Chrome/Edge না থাকলে SKIP লিখবে, তখন Windows-এ �
   instance আগে বন্ধ করুন।
 - কোনো site-এ WebSocket payload binary/encoded হলে সেটা raw আকারে save হয়;
   DOM correlation দিয়ে তখনও বোঝা যায় কোন frame কোন message — decode পরের ধাপের কাজ।
+
+## Account checker (আলাদা tool, Python)
+
+`capture/checker/` হলো একটা independent Playwright login checker (Python),
+`capture/`-এর Node traffic recorder নয়। Dizkover-এর login valid/invalid
+যাচাই করে, proxy health দেখায় এবং প্রতি step-এ log রাখে। ব্যবহার ও fix-এর
+বিবরণ: `capture/checker/README.md`।
+
+- Install: `capture\checker\install.bat`
+- Accounts: `capture\checker\data\ac.txt`
+- Run: `capture\checker\run.bat`
+
+`capture\checker\data\` Git-ignored; ওখানে credential/log/debug artifact থাকে।

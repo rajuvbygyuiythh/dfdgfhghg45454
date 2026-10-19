@@ -1,0 +1,6 @@
+# One account per line: username:password
+# Lines starting with # are ignored. Passwords may contain ":".
+#
+# Example (replace these):
+# alice:my-password
+# bob:another-password
