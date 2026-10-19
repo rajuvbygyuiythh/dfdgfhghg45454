@@ -75,7 +75,7 @@ import config
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = Path(config.DATA_DIR) if config.DATA_DIR else BASE_DIR / "data"
 
 
 def G(text):
@@ -303,7 +303,7 @@ async def browser_proxy_test(proxies, headless: bool, logger: Logger):
         return
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=headless)
+        browser = await pw.chromium.launch(**launch_options(headless))
         try:
             for proxy in proxies:
                 context = None
@@ -354,6 +354,13 @@ async def browser_proxy_test(proxies, headless: bool, logger: Logger):
 # ---------------------------------------------------------------------------
 # Browser helpers
 # ---------------------------------------------------------------------------
+
+
+def launch_options(headless: bool):
+    options = {"headless": headless}
+    if config.CHROMIUM_EXECUTABLE:
+        options["executable_path"] = config.CHROMIUM_EXECUTABLE
+    return options
 
 
 async def close_quietly(obj):
@@ -1157,7 +1164,18 @@ async def run(args):
     semaphore = asyncio.Semaphore(max(1, int(config.MAX_TABS)))
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=headless)
+        try:
+            browser = await pw.chromium.launch(**launch_options(headless))
+        except Exception as exc:
+            detail = collapse_whitespace(str(exc))[:400]
+            logger.write(
+                "[{}] [ERROR] Chromium could not start: {}".format(ts(), detail)
+            )
+            print(R("\n[X] Chromium could not start."))
+            print("    " + detail)
+            print("    Run install.bat (downloads Playwright Chromium), or set")
+            print("    CHROMIUM_EXECUTABLE in config.py to your chrome.exe path.")
+            return 1
         logger.write(
             "[{}] [INFO] Chromium launched | headless={}".format(ts(), headless)
         )

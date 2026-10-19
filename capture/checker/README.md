@@ -85,6 +85,8 @@ guess করা ঠিক না।
    - `5-7` logs / valid / invalid দেখা
    - `8-9` account/proxy edit
    - `10` installer
+   - `11` **real-browser self-test** — local replica site-এ আসল Chromium দিয়ে
+     পুরো flow চালায় (ইন্টারনেট বা আসল account লাগে না)
 
 Command line সরাসরি:
 
@@ -167,6 +169,41 @@ reCAPTCHA Enterprise-এর request (`/recaptcha/enterprise/reload`,
 `replaceimage`, `userverify`) page-এ load হয়, কিন্তু captured login POST-এ
 কোনো captcha token ছিল না। তাই script token bypass করার চেষ্টা করে না; কোনো
 visible challenge এলে সেটা `ERROR: CAPTCHA challenge shown` হিসেবে report করে।
+
+## Self-test levels
+
+| Test | কী প্রমাণ করে | Browser | Internet |
+|---|---|---|---|
+| `test_core.py` + `test_flow.py` | parsing + classification + পুরো `check_account` flow (fake page) | ❌ | ❌ |
+| `selftest_live.py` | আসল Chromium-এ form fill → POST → redirect → loginnotify → result files; VALID/INVALID/BANNED/CAPTCHA চারটাই | ✅ | ❌ (local replica) |
+| `main.py` (real run) | আসল site-এ আসল account | ✅ | ✅ |
+
+```bat
+py -3 -m unittest -v test_core.py test_flow.py
+py -3 selftest_live.py
+py -3 selftest_live.py --visible
+```
+
+`selftest_live.py` একটা temporary data folder ব্যবহার করে, তাই আপনার আসল
+`data\ac.txt` / `valid.txt` ছোঁয় না।
+
+## Environment override (এক run-এর জন্য)
+
+`config.py` না বদলে env var দিয়ে বদলানো যায়:
+
+| Variable | অর্থ |
+|---|---|
+| `DIZKOVER_HEADLESS` | `0` = visible |
+| `DIZKOVER_CHROMIUM` | `C:\Program Files\Google\Chrome\Application\chrome.exe` |
+| `DIZKOVER_TABS` | একসাথে কত account |
+| `DIZKOVER_USE_PROXY` | `0` = Direct |
+| `DIZKOVER_BASE_URL` | অন্য mirror/host |
+| `DIZKOVER_DATA_DIR` | data folder বদলানো (self-test এটাই ব্যবহার করে) |
+
+```bat
+set DIZKOVER_CHROMIUM=C:\Program Files\Google\Chrome\Application\chrome.exe
+py -3 main.py --visible
+```
 
 ## Limitations / নিরাপত্তা
 

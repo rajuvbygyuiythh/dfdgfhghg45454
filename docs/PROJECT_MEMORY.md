@@ -9,7 +9,7 @@ after every meaningful change** (newest last). Never rewrite old entries.
 <!-- AUTO:BEGIN -->
 _Auto status 2026-10-19. Do not edit this block by hand._
 
-- Source fingerprint: `0198efcd2543630d…`
+- Source fingerprint: `8fd475967587d8ca…`
 - Browser options: `rod`, `chromedp`, `show_mode`
 - Capture tool: v1.2.1
 - Last verification: **BLOCKED** (PASS 3, FAIL 0, BLOCKED 10) — BLOCKED is not PASS; see `verification-output/report.json`
@@ -417,3 +417,21 @@ license, proxy or dependency changes.
   login/browser run was NOT executed (no credentials/browser in the verification
   environment), so real account results remain unverified until the user runs
   `run.bat`.
+
+- 2026-10-20 — Checker made testable without the internet: `config.py` reads
+  documented `DIZKOVER_*` environment overrides (data dir, base URL, browser
+  path, headless, tabs, proxy), `CHROMIUM_EXECUTABLE` supports a local
+  Chrome/Edge, and a failed browser launch is reported instead of crashing.
+  New `selftest_server.py` replays the captured Dizkover login
+  (`/site/login` form without `_csrf`, redirect on success, `.help-block` on
+  bad credentials, `/ajax/loginnotify` -> `{"out":1}`, `/banned`) and
+  `selftest_live.py` runs the unmodified `main.py` with a real Chromium against
+  it. Locally verified: 32 browser-free tests PASS and 13/13 real-browser
+  self-test expectations PASS (VALID, INVALID + reason, BANNED, CAPTCHA,
+  loginnotify use, no CSRF dead-end, no passwords in logs, debug artifacts).
+  A real run against www.dizkover.com was attempted and is still NOT verified:
+  this environment's egress policy cuts the TLS handshake
+  (`net::ERR_CONNECTION_CLOSED` at step `page_load`), so the checker correctly
+  reported ERROR with the exact step instead of guessing. The owner must run
+  `run.bat` on Windows for a live result. The owner pasted a real credential in
+  chat; it is deliberately absent from the repository and the log files.

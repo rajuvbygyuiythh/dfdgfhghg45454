@@ -1,10 +1,41 @@
 # Dizkover account checker - configuration.
 #
+# Every value can be overridden for one run without editing this file, e.g.
+#     set DIZKOVER_HEADLESS=0 & py -3 main.py
+# Only the documented environment variables below are read.
+
+import os
+
+
+def _flag(name, default):
+    value = os.environ.get(name)
+    if value is None or value == "":
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+def _text(name, default):
+    value = os.environ.get(name)
+    return default if value is None or value == "" else value.strip()
+
+
+def _number(name, default, cast=int):
+    value = os.environ.get(name)
+    if value is None or value == "":
+        return default
+    try:
+        return cast(value)
+    except (TypeError, ValueError):
+        return default
+
 # Paths below are relative to the checker's data/ folder, which is created by
 # install.bat. Runtime files never live next to the source, so they cannot be
 # committed or packed into a source archive by accident.
 
 # ---- Files (inside data/) -------------------------------------------------
+# Override the whole folder (used by selftest_live.py so a self-test never
+# touches your real accounts/results).
+DATA_DIR = _text("DIZKOVER_DATA_DIR", "")
 ACCOUNTS_FILE = "ac.txt"
 PROXY_FILE = "proxy.txt"
 VALID_FILE = "valid.txt"
@@ -15,14 +46,20 @@ LOG_FILE = "logs.txt"
 DEBUG_DIR = "debug"
 
 # ---- Target ---------------------------------------------------------------
-LOGIN_URL = "https://www.dizkover.com/site/login"
-LOGIN_PATH = "/site/login"
-HOME_URL = "https://www.dizkover.com/"
-LOGIN_NOTIFY_URL = "https://www.dizkover.com/ajax/loginnotify"
+# The URLs can be overridden for testing against a local replica; see
+# selftest_live.py. Leave them as they are for real runs.
+BASE_URL = _text("DIZKOVER_BASE_URL", "https://www.dizkover.com")
+LOGIN_PATH = _text("DIZKOVER_LOGIN_PATH", "/site/login")
+LOGIN_URL = _text("DIZKOVER_LOGIN_URL", BASE_URL + LOGIN_PATH)
+HOME_URL = BASE_URL + "/"
+LOGIN_NOTIFY_URL = _text("DIZKOVER_LOGIN_NOTIFY_URL", BASE_URL + "/ajax/loginnotify")
 
 # ---- Browser --------------------------------------------------------------
-HEADLESS = True
-MAX_TABS = 5
+HEADLESS = _flag("DIZKOVER_HEADLESS", True)
+# Optional: full path to chrome.exe / chromium. Empty = Playwright's bundled
+# Chromium (installed by install.bat). Useful if you already have Chrome/Edge.
+CHROMIUM_EXECUTABLE = _text("DIZKOVER_CHROMIUM", "")
+MAX_TABS = _number("DIZKOVER_TABS", 5)
 TIMEOUT = 30000          # milliseconds, page navigation / selectors
 RESULT_TIMEOUT = 15000   # milliseconds, wait for login result after submit
 MAX_RETRY = 2            # only network/unknown errors are retried
@@ -50,10 +87,10 @@ TIMEZONE_ID = "Asia/Dhaka"
 # True  = use working rows from data/proxy.txt (falls back to Direct when the
 #         file is empty or every proxy is dead).
 # False = always connect directly.
-USE_PROXY = True
+USE_PROXY = _flag("DIZKOVER_USE_PROXY", True)
 REQUIRE_PROXY = False    # True = do not fall back to Direct
-PROXY_TIMEOUT = 10       # seconds per health check
-PROXY_TEST_URL = "https://api.ipify.org?format=json"
+PROXY_TIMEOUT = _number("DIZKOVER_PROXY_TIMEOUT", 10)
+PROXY_TEST_URL = _text("DIZKOVER_PROXY_TEST_URL", "https://api.ipify.org?format=json")
 VERIFY_PROXY_IN_BROWSER = True   # open PROXY_TEST_URL in the real context first
 
 # ---- Timing ---------------------------------------------------------------

@@ -46,6 +46,7 @@ echo    [7] View invalid.txt
 echo    [8] Edit accounts (data\ac.txt)
 echo    [9] Edit proxies (data\proxy.txt)
 echo   [10] Run installer
+echo   [11] Real-browser self-test (local replica)
 echo    [0] Exit
 echo.
 set /p "pick=Select: "
@@ -60,6 +61,7 @@ if "%pick%"=="7" goto :view_invalid
 if "%pick%"=="8" goto :edit_accounts
 if "%pick%"=="9" goto :edit_proxies
 if "%pick%"=="10" goto :installer
+if "%pick%"=="11" goto :selftest_live
 if "%pick%"=="0" goto :end
 goto :menu
 
@@ -152,6 +154,17 @@ goto :menu
 :installer
 call install.bat
 goto :menu
+
+:selftest_live
+call :require_python
+if errorlevel 1 goto :pause_menu
+call :ensure_deps
+if errorlevel 1 goto :pause_menu
+cls
+echo [*] Real-browser self-test against a local replica (no internet)...
+echo.
+%PY% selftest_live.py
+goto :pause_menu
 
 rem ---- Helpers -------------------------------------------------------------
 
