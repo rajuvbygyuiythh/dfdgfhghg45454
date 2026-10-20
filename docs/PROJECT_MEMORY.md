@@ -662,3 +662,8 @@ closes the browsers.
   before TempDir removal). All tests now pass on Windows too.
 - Earlier cross-compiled exes were replaced by the CI-built ones; the zip was
   fetched from the CI branch and its manifest verified locally.
+- Final native run **39368005120 PASS** (vet, tests, Wails build, CLIs,
+  PE check, zip). The Wails build also regenerated
+  `cmd/chitchatui/frontend/wailsjs/go/main/App.{js,d.ts}` and `models.ts`;
+  those stale bindings were refreshed in the repo so the dashboard's
+  generated JS now includes every CrushFling method.
