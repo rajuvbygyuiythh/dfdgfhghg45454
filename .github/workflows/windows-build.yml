@@ -1,0 +1,112 @@
+name: Windows build
+
+# Builds the real Windows executables on a Windows runner (no cross-compile)
+# and uploads them together with the ready-to-run release zip.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "wails.json"
+      - "cmd/chitchatui/frontend/**"
+      - "scripts/package-release.cjs"
+      - "scripts/source-files.cjs"
+      - ".github/workflows/windows-build.yml"
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Build Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Toolchain versions
+        run: |
+          go version
+          node --version
+          npm --version
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Vet and unit tests
+        run: |
+          go vet ./...
+          go test -count=1 ./internal/crushfling/...
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+
+      - name: Build dashboard (Wails, Windows GUI)
+        shell: pwsh
+        run: |
+          $env:PATH = "$env:USERPROFILE\go\bin;$env:PATH"
+          wails version
+          wails build -clean -webview2 error
+          if (-not (Test-Path "build/bin/chitchatui.exe")) { throw "chitchatui.exe missing" }
+
+      - name: Build CLI workers
+        run: |
+          go build -trimpath -ldflags "-w -s" -o build/bin/chitchatbot.exe ./cmd/chitchatbot
+          go build -trimpath -ldflags "-w -s" -o build/bin/crushfling.exe ./cmd/crushfling
+
+      - name: Verify PE headers and subsystem
+        shell: pwsh
+        run: |
+          $expected = @{ "chitchatui.exe" = 2; "chitchatbot.exe" = 3; "crushfling.exe" = 3 }
+          foreach ($name in $expected.Keys) {
+            $path = "build/bin/$name"
+            $bytes = [IO.File]::ReadAllBytes($path)
+            if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "$name is not a PE (MZ)" }
+            $pe = [BitConverter]::ToInt32($bytes, 0x3C)
+            $machine = [BitConverter]::ToUInt16($bytes, $pe + 4)
+            $magic = [BitConverter]::ToUInt16($bytes, $pe + 24)
+            $subsystem = [BitConverter]::ToUInt16($bytes, $pe + 24 + 68)
+            if ($machine -ne 0x8664) { throw "$name machine=$machine, expected x86-64" }
+            if ($magic -ne 0x20B) { throw "$name is not PE32+" }
+            if ($subsystem -ne $expected[$name]) { throw "$name subsystem=$subsystem, expected $($expected[$name])" }
+            $size = [math]::Round($bytes.Length / 1MB, 1)
+            Write-Host ("OK  {0,-16} PE32+ x86-64 subsystem={1} size={2} MB" -f $name, $subsystem, $size)
+          }
+
+      - name: Build clean release zip
+        run: |
+          npm ci --ignore-scripts
+          node scripts/package-release.cjs
+
+      - name: Upload executables
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-exe
+          path: |
+            build/bin/chitchatui.exe
+            build/bin/chitchatbot.exe
+            build/bin/crushfling.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload release zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrushFling-Bot-Windows-x64
+          path: release/CrushFling-Bot-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
