@@ -4,9 +4,12 @@
   "private": true,
   "description": "Browser-free verification tools; not production UI dependencies",
   "scripts": {
-    "test": "node --test tests/settings.test.cjs tests/browser-ui.test.cjs tests/contracts.test.cjs tests/package.test.cjs tests/verification.test.cjs tests/project-map.test.cjs tests/showmode-dom.test.cjs",
+    "pretest": "node scripts/crushfling-overlay.cjs",
+    "test": "node --test tests/settings.test.cjs tests/browser-ui.test.cjs tests/contracts.test.cjs tests/package.test.cjs tests/verification.test.cjs tests/project-map.test.cjs tests/showmode-dom.test.cjs tests/crushfling-ui.test.cjs tests/launchers.test.cjs",
     "verify": "node scripts/verify.cjs",
     "package:source": "node scripts/package-source.cjs",
+    "overlay:sync": "node scripts/crushfling-overlay.cjs",
+    "overlay:check": "node scripts/crushfling-overlay.cjs --check",
     "map:update": "node scripts/project-map.cjs",
     "test:showmode": "node --check internal/browser/showmode_dom.js && node --test tests/showmode-dom.test.cjs"
   },

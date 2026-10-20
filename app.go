@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	stdruntime "runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"chitchatbot/internal/bot"
+	"chitchatbot/internal/crushfling"
 	"chitchatbot/internal/license"
 	"chitchatbot/internal/model"
 	"chitchatbot/internal/proxy"
@@ -44,6 +46,7 @@ type App struct {
 	licenseReason   string
 	licenseTimer    *time.Ticker
 	licenseDone     chan bool
+	crushService    *crushfling.Service
 }
 
 func NewApp(dataDir string) (*App, error) {
@@ -52,10 +55,15 @@ func NewApp(dataDir string) (*App, error) {
 		return nil, err
 	}
 
+	// Keep this feature's runtime data inside the app's data folder. A failure
+	// here must not stop the chitchat.gg app from starting.
+	crushSvc, _ := crushfling.NewService(filepath.Join(dataDir, "crushfling"))
+
 	app := &App{
 		dataDir:       dataDir,
 		uiStore:       uiStore,
 		activeWorkers: map[string]bool{},
+		crushService:  crushSvc,
 	}
 
 	if err := app.seedDefaults(); err != nil {
@@ -753,7 +761,7 @@ func (a *App) StartBot() error {
 	}
 
 	a.log("info", fmt.Sprintf("Starting %d worker(s) across all discovered profiles.", len(configs)))
-	a.botEvent("system", fmt.Sprintf("starting %d worker(s)", len(configs)), "", "", "", true))
+	a.botEvent("system", fmt.Sprintf("starting %d worker(s)", len(configs)), "", "", "", true)
 
 	var wg sync.WaitGroup
 	wg.Add(len(configs))
@@ -1493,6 +1501,281 @@ func (a *App) log(level string, message string) {
 		disk.Error(fmt.Sprintf("UI log persistence failed: %v", err))
 	}
 }
+
+// --- CrushFling Auto Register (delegates to internal/crushfling Service) ---
+
+func (a *App) GetCrushConfig() crushfling.RegisterConfig {
+	if a.crushService == nil {
+		return crushfling.DefaultRegisterConfig(filepath.Join(a.dataDir, "crushfling"))
+	}
+	return a.crushService.GetConfig()
+}
+func (a *App) GetCrushStats() crushfling.RegistrationStats {
+	if a.crushService == nil {
+		return crushfling.RegistrationStats{}
+	}
+	return a.crushService.GetStats()
+}
+func (a *App) StartCrushBulk(cfg crushfling.RegisterConfig) error {
+	if a.crushService == nil {
+		return fmt.Errorf("crushfling service not initialized")
+	}
+	return a.crushService.StartBulk(cfg)
+}
+func (a *App) StopCrushBulk() error {
+	if a.crushService == nil {
+		return fmt.Errorf("crushfling service not initialized")
+	}
+	return a.crushService.StopBulk()
+}
+func (a *App) GetCrushLogs(limit int) []string {
+	if a.crushService == nil {
+		return nil
+	}
+	return a.crushService.GetLogs(limit)
+}
+func (a *App) GetPictureCount() (int, error) {
+	if a.crushService == nil {
+		return 0, fmt.Errorf("not initialized")
+	}
+	return a.crushService.GetPictureCount()
+}
+func (a *App) GetCaptionCount() (int, error) {
+	if a.crushService == nil {
+		return 0, fmt.Errorf("not initialized")
+	}
+	return a.crushService.GetCaptionCount()
+}
+func (a *App) PreviewCrushProfile() crushfling.ProfileData {
+	if a.crushService == nil {
+		return crushfling.ProfileData{}
+	}
+	return a.crushService.PreviewProfile()
+}
+func (a *App) ListCrushAccounts() ([]crushfling.AccountResult, error) {
+	if a.crushService == nil {
+		return nil, fmt.Errorf("not initialized")
+	}
+	return a.crushService.ListAccounts()
+}
+func (a *App) OpenCrushflingDataFolder() (string, error) {
+	dir := filepath.Join(a.dataDir, "crushfling")
+	if a.crushService != nil {
+		dir = a.crushService.DataDir()
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	abs, _ := filepath.Abs(dir)
+	_ = exec.Command("explorer.exe", abs).Start()
+	return "CrushFling data folder: " + abs, nil
+}
+
+func (a *App) GetCrushDebugInfo() crushfling.DebugInfo {
+	if a.crushService == nil {
+		return crushfling.DebugInfo{DataDir: filepath.Join(a.dataDir, "crushfling")}
+	}
+	return a.crushService.GetDebugInfo()
+}
+
+func (a *App) GetCrushLogPath() string {
+	if a.crushService == nil {
+		return ""
+	}
+	return a.crushService.LogPath()
+}
+
+// CreateCrushDebugReport writes a redacted support report next to the failure
+// dumps and returns its path.
+func (a *App) CreateCrushDebugReport() (string, error) {
+	if a.crushService == nil {
+		return "", fmt.Errorf("crushfling service not initialized")
+	}
+	return a.crushService.CreateDebugReport()
+}
+
+// OpenCrushLogFolder opens <data>/crushfling/logs in Explorer.
+func (a *App) OpenCrushLogFolder() (string, error) {
+	dir := filepath.Join(a.dataDir, "crushfling", "logs")
+	if a.crushService != nil {
+		dir = filepath.Join(a.crushService.DataDir(), "logs")
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	abs, _ := filepath.Abs(dir)
+	_ = exec.Command("explorer.exe", abs).Start()
+	return "CrushFling logs: " + abs, nil
+}
+
+// --- CrushFling dashboard helpers (professional panel) ---------------------
+
+// PickCrushPictureFolder lets the operator choose the pictures folder with a
+// native dialog. Returns "" when the dialog is cancelled.
+func (a *App) PickCrushPictureFolder() (string, error) {
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select the folder with profile pictures",
+	})
+	if err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+// PickCrushBioFile selects a text file and imports it as <data>/bio.txt.
+// One non-empty line = one bio; the imported list is de-duplicated.
+func (a *App) PickCrushBioFile() (crushfling.BioInfo, error) {
+	if a.crushService == nil {
+		return crushfling.BioInfo{}, fmt.Errorf("crushfling service not initialized")
+	}
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select the bio list (one line per bio)",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Text files (*.txt)", Pattern: "*.txt"},
+		},
+	})
+	if err != nil {
+		return crushfling.BioInfo{}, err
+	}
+	if strings.TrimSpace(path) == "" {
+		return crushfling.BioInfo{}, nil
+	}
+	return a.crushService.ImportBioFile(path)
+}
+
+// GetCrushBioInfo summarises the active bio list (path, remaining, preview).
+func (a *App) GetCrushBioInfo() (crushfling.BioInfo, error) {
+	if a.crushService == nil {
+		return crushfling.BioInfo{}, fmt.Errorf("crushfling service not initialized")
+	}
+	return a.crushService.GetBioInfo()
+}
+
+// ImportCrushBioFile imports a bio file by path (no dialog), used by tests and
+// by the CLI-facing UI when the operator pastes a path.
+func (a *App) ImportCrushBioFile(path string) (crushfling.BioInfo, error) {
+	if a.crushService == nil {
+		return crushfling.BioInfo{}, fmt.Errorf("crushfling service not initialized")
+	}
+	return a.crushService.ImportBioFile(path)
+}
+
+// PickCrushProxyFile selects a proxy list file.
+func (a *App) PickCrushProxyFile() (string, error) {
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select the proxy list",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Proxy lists (*.txt)", Pattern: "*.txt"},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
+// ValidateCrushProxies parses the proxy list exactly like a run would and
+// reports how many entries are usable. It never makes a network request.
+func (a *App) ValidateCrushProxies(filePath, rawList string) crushfling.ProxyCheck {
+	if a.crushService == nil {
+		return crushfling.ProxyCheck{Errors: []string{"crushfling service not initialized"}}
+	}
+	return a.crushService.ValidateProxies(filePath, rawList)
+}
+
+// OpenCrushPicturesFolder opens the picture folder in the OS file manager
+// (Explorer on Windows, xdg-open/open elsewhere so the same build is usable in
+// development).
+func (a *App) OpenCrushPicturesFolder() (string, error) {
+	dir := filepath.Join(a.dataDir, "crushfling", "pictures")
+	if a.crushService != nil {
+		dir = filepath.Join(a.crushService.DataDir(), "pictures")
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	abs, _ := filepath.Abs(dir)
+	if err := openPathInOS(abs); err != nil {
+		return "CrushFling pictures: " + abs, err
+	}
+	return "CrushFling pictures: " + abs, nil
+}
+
+// openPathInOS opens a folder (or file) with the platform's default handler.
+func openPathInOS(path string) error {
+	switch stdruntime.GOOS {
+	case "windows":
+		return exec.Command("explorer.exe", path).Start()
+	case "darwin":
+		return exec.Command("open", path).Start()
+	default:
+		return exec.Command("xdg-open", path).Start()
+	}
+}
+
+// CloseCrushBrowsers kills every browser the worker opened. The Stop button
+// calls StopBulk (which already does this); this binding is for the explicit
+// "Close browsers" control.
+func (a *App) CloseCrushBrowsers() int {
+	return crushfling.CloseAllBrowsers()
+}
+
+// GetCrushBrowsersOpen reports how many browsers are registered right now.
+func (a *App) GetCrushBrowsersOpen() int {
+	return crushfling.OpenBrowserCount()
+}
+
+// GetCrushSummary is the single call the dashboard polls for its counters.
+type CrushSummary struct {
+	Running     bool                         `json:"running"`
+	Pictures    int                          `json:"pictures"`
+	Bios        int                          `json:"bios"`
+	Accounts    int                          `json:"accounts"`
+	Verified    int                          `json:"verified"`
+	Browsers    int                          `json:"browsers"`
+	BioFile     string                       `json:"bio_file"`
+	PictureDir  string                       `json:"picture_dir"`
+	DataDir     string                       `json:"data_dir"`
+	AccountsCSV string                       `json:"accounts_csv"`
+	Stats       crushfling.RegistrationStats `json:"stats"`
+}
+
+// GetCrushSummary returns everything the dashboard header shows in one call.
+func (a *App) GetCrushSummary() CrushSummary {
+	summary := CrushSummary{Browsers: crushfling.OpenBrowserCount()}
+	if a.crushService == nil {
+		return summary
+	}
+	summary.DataDir = a.crushService.DataDir()
+	summary.Stats = a.crushService.GetStats()
+	summary.Running = summary.Stats.Running
+	if n, err := a.crushService.GetPictureCount(); err == nil {
+		summary.Pictures = n
+	}
+	if info, err := a.crushService.GetBioInfo(); err == nil {
+		summary.Bios = info.Remaining
+		summary.BioFile = info.Path
+	}
+	if accounts, err := a.crushService.ListAccounts(); err == nil {
+		summary.Accounts = len(accounts)
+		for _, account := range accounts {
+			if account.Verified {
+				summary.Verified++
+			}
+		}
+	}
+	summary.PictureDir = filepath.Join(a.crushService.DataDir(), "pictures")
+	summary.AccountsCSV = filepath.Join(a.crushService.DataDir(), "accounts.csv")
+	return summary
+}
+
+// Compatibility aliases used by the dashboard overlay (short names).
+func (a *App) GetStats() crushfling.RegistrationStats            { return a.GetCrushStats() }
+func (a *App) StartBulk(cfg crushfling.RegisterConfig) error     { return a.StartCrushBulk(cfg) }
+func (a *App) StopBulk() error                                   { return a.StopCrushBulk() }
+func (a *App) GetLogs(limit int) []string                        { return a.GetCrushLogs(limit) }
+func (a *App) ListAccounts() ([]crushfling.AccountResult, error) { return a.ListCrushAccounts() }
+func (a *App) PreviewProfile() crushfling.ProfileData            { return a.PreviewCrushProfile() }
 
 // Separate read-only display API; settings/stats/logs contracts are unchanged.
 func (a *App) GetLiveChatSnapshot(sessionID string) homeChatSnapshot {

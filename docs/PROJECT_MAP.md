@@ -8,22 +8,23 @@ with `AGENTS.md` (locked scope/rules) and `docs/PROJECT_MEMORY.md`
 (decisions and current state).
 
 <!-- AUTO:BEGIN -->
-_Auto-generated 2026-10-17 by `scripts/project-map.cjs`. Do not edit this block by hand._
+_Auto-generated 2026-10-20 by `scripts/project-map.cjs`. Do not edit this block by hand._
 
 ## Source inventory
 
-- Total source files: **204** (1215.6 KiB, excluding runtime/private data)
+- Total source files: **255** (1688.7 KiB, excluding runtime/private data)
 
 | Area | Files | Size |
 |---|---:|---:|
-| `internal/` | 97 | 483.1 KiB |
+| `internal/` | 127 | 715.7 KiB |
+| `(root files)` | 28 | 223.5 KiB |
 | `capture/` | 25 | 114.3 KiB |
-| `(root files)` | 24 | 200.7 KiB |
-| `docs/` | 18 | 98.2 KiB |
+| `docs/` | 22 | 172.9 KiB |
+| `cmd/` | 16 | 216.6 KiB |
+| `scripts/` | 13 | 51.5 KiB |
 | `apitest/` | 12 | 99.3 KiB |
-| `scripts/` | 11 | 42.5 KiB |
-| `cmd/` | 9 | 122.1 KiB |
-| `tests/` | 8 | 55.5 KiB |
+| `tests/` | 10 | 69.3 KiB |
+| `crushfling/` | 2 | 25.6 KiB |
 
 ## Internal Go packages
 
@@ -31,6 +32,7 @@ _Auto-generated 2026-10-17 by `scripts/project-map.cjs`. Do not edit this block 
 - `internal/applog/` — 4 Go file(s)
 - `internal/bot/` — 23 Go file(s)
 - `internal/browser/` — 11 Go file(s)
+- `internal/crushfling/` — 30 Go file(s)
 - `internal/license/` — 1 Go file(s)
 - `internal/model/` — 4 Go file(s)
 - `internal/proxy/` — 7 Go file(s)
@@ -60,6 +62,10 @@ _Auto-generated 2026-10-17 by `scripts/project-map.cjs`. Do not edit this block 
 - `docs/BROWSER_DIRECT_RUN.md`
 - `docs/CHAT_ENGINE_MAPPING.md`
 - `docs/CHITCHAT_PROTOCOL.md`
+- `docs/CRUSHFLING_AUTO_REGISTER.md`
+- `docs/CRUSHFLING_DEBUGGING.md`
+- `docs/CRUSHFLING_ROADMAP.md`
+- `docs/CRUSHFLING_SIGNUP_PLAN.md`
 - `docs/DEBUG_CLEANUP.md`
 - `docs/EVACHAT_FLOW_GUIDE.md`
 - `docs/FILE_LOGGING.md`
@@ -108,3 +114,24 @@ _Auto-generated 2026-10-17 by `scripts/project-map.cjs`. Do not edit this block 
 - Show Mode first-wait state is in `live_chat.go`; sequence/EVA engines remain
   unchanged except the sequence responder's lazy first-line initialization.
 - `docs/FIRST_MESSAGE_SETTINGS.md`: scope, DM distinction, evidence and limits.
+
+## CrushFling Auto Register (2026-10-20, separate feature)
+
+- `internal/crushfling/`: temp-mail providers, CookieJar session + magic-link
+  click, caption/picture managers, `api.json` endpoint calibration, account
+  store, Wails `Service`, Rod fallback.
+- `cmd/crushfling/main.go`: CLI worker (`--count`, `--concurrency`, `--email`,
+  `--proxy`, `--browser`, `--captcha`, `--check`, `--debug`, `--trace-http`,
+  `--mail-hook`).
+- `crushfling/data/`: runtime data only (caption.txt, pictures/, api.json,
+  accounts.json, logs/, debug/) — auto-created and gitignored.
+- Debugging: `internal/crushfling/debug.go` (run log + redaction + failure
+  dumps), `httptrace.go` (JSONL trace), `docs/CRUSHFLING_DEBUGGING.md`;
+  next-task plan in `docs/CRUSHFLING_ROADMAP.md`.
+- Dashboard: `dist/index.html` overlay + `dist/crushfling.js`; opens from the
+  sidebar link or `?view=crushfling`. Wails injects its runtime only into
+  `index.html`, which is why this is an overlay and not a separate page.
+- Not part of the chitchat.gg chat pipeline: it does not touch `internal/bot`,
+  `internal/browser` drivers, license or the worker protocol.
+- Evidence: tree-sitter parse of all 110 Go files, `npm test` 76/76, `go vet` + `go test -race` on the CrushFling packages, JS syntax
+  checks; Go tests are written but unexecuted in the authoring sandbox.

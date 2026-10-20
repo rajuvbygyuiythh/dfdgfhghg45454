@@ -86,6 +86,7 @@ function main() {
     "tests/package.test.cjs",
     "tests/verification.test.cjs",
     "tests/showmode-dom.test.cjs",
+    "tests/crushfling-ui.test.cjs",
   ]);
   const go = process.env.GO_BINARY || "go";
   const goAvailable = run("go-toolchain", go, ["version"]);
@@ -112,6 +113,25 @@ function main() {
         "internal/proxy/relay.go", "internal/proxy/testproxy.go",
         "internal/proxy/proxy_test.go", "internal/proxy/relay_test.go",
         "internal/proxy/diagnostics_test.go",
+        // CrushFling feature (additive package; gofmt takes files, not dirs).
+        "internal/crushfling/api_config.go", "internal/crushfling/api_config_test.go",
+        "internal/crushfling/browser.go", "internal/crushfling/browserpool.go",
+        "internal/crushfling/browserpool_test.go", "internal/crushfling/captcha.go",
+        "internal/crushfling/caption.go", "internal/crushfling/caption_test.go",
+        "internal/crushfling/debug.go", "internal/crushfling/debug_test.go",
+        "internal/crushfling/discover.go", "internal/crushfling/discover_test.go",
+        "internal/crushfling/endpoints_guard_test.go",
+        "internal/crushfling/flow_test.go", "internal/crushfling/generator.go",
+        "internal/crushfling/generator_test.go",
+        "internal/crushfling/httptrace.go", "internal/crushfling/network_analysis.go",
+        "internal/crushfling/register.go", "internal/crushfling/service.go",
+        "internal/crushfling/session.go", "internal/crushfling/session_test.go",
+        "internal/crushfling/signup_flow_test.go", "internal/crushfling/store.go",
+        "internal/crushfling/types.go",
+        "internal/crushfling/email/factory.go", "internal/crushfling/email/mailtm.go",
+        "internal/crushfling/email/provider.go", "internal/crushfling/email/provider_test.go",
+        "internal/crushfling/email/sec_mail.go",
+        "cmd/crushfling/main.go",
       ],
       { emptyOutput: true },
     );
@@ -131,6 +151,8 @@ function main() {
         "./internal/proxy",
         "./internal/store",
         "./internal/api",
+        "./internal/crushfling",
+        "./cmd/crushfling",
       ];
       run("go-regression-tests", go, [
         "test",
