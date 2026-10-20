@@ -14,6 +14,9 @@ on:
       - "cmd/chitchatui/frontend/**"
       - "scripts/package-release.cjs"
       - "scripts/source-files.cjs"
+      - "scripts/build-crushfling-standalone.cjs"
+      - "scripts/package-crushfling-standalone.cjs"
+      - "scripts/standalone/**"
       - "RELEASE-NOTES.md"
       - ".github/workflows/windows-build.yml"
   release:
@@ -105,6 +108,45 @@ jobs:
             Write-Host ("OK  {0,-16} PE32+ x86-64 subsystem={1} size={2} MB" -f $name, $subsystem, $size)
           }
 
+      - name: Generate standalone CrushFling project
+        run: node scripts/build-crushfling-standalone.cjs
+
+      - name: Build standalone CrushFling (Windows GUI + CLI)
+        shell: pwsh
+        run: |
+          Push-Location standalone
+          $out = go mod tidy 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error title=standalone-tidy::$($out -replace '%','%25' -replace "`r?`n",'%0A')"
+            Pop-Location; exit 1
+          }
+          $env:CGO_ENABLED = "0"
+          go build -trimpath -tags desktop,production -ldflags "-w -s -H windowsgui" -o CrushFling.exe .
+          if ($LASTEXITCODE -ne 0) { Pop-Location; throw "standalone dashboard build failed" }
+          go build -trimpath -ldflags "-w -s" -o crushfling-cli.exe ./cmd/crushfling
+          if ($LASTEXITCODE -ne 0) { Pop-Location; throw "standalone CLI build failed" }
+          foreach ($name in @("CrushFling.exe", "crushfling-cli.exe")) {
+            $bytes = [IO.File]::ReadAllBytes((Join-Path (Get-Location) $name))
+            if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "$name is not a PE file" }
+            $pe = [BitConverter]::ToInt32($bytes, 0x3C)
+            $machine = [BitConverter]::ToUInt16($bytes, $pe + 4)
+            $subsystem = [BitConverter]::ToUInt16($bytes, $pe + 24 + 68)
+            if ($machine -ne 0x8664) { throw "$name machine=$machine" }
+            Write-Host ("OK  {0,-20} PE32+ x86-64 subsystem={1} size={2} MB" -f $name, $subsystem, [math]::Round($bytes.Length / 1MB, 1))
+          }
+          Pop-Location
+
+      - name: Package the CrushFling-only zip
+        run: node scripts/package-crushfling-standalone.cjs
+
+      - name: Upload CrushFling-only zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrushFling-Only-Windows-x64
+          path: release/CrushFling-Only-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Build clean release zip
         run: |
           npm ci --ignore-scripts
@@ -149,4 +191,24 @@ jobs:
           }
           gh release upload $tag $zip --clobber
           gh release upload $tag build/bin/chitchatui.exe build/bin/chitchatbot.exe build/bin/crushfling.exe --clobber
+          gh release view $tag --json tagName,url,assets --jq '"release: " + .tagName + " " + .url'
+
+      # The owner only needs CrushFling, so it gets its own release with a
+      # single asset: one zip, no ChitChat Bot files.
+      - name: Publish CrushFling-only release
+        if: github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "crushfling"
+          $zip = "release/CrushFling-Only-Windows-x64.zip"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --target "${{ github.sha }}" `
+              --title "CrushFling Auto Register - Windows x64 (only CrushFling)" `
+              --notes "Standalone CrushFling app. Extract the zip, then double-click run.bat. Contains CrushFling.exe (dashboard), crushfling-cli.exe and the source to rebuild with install.bat. No accounts, cookies, sessions or logs." `
+              --latest
+          }
+          gh release upload $tag $zip --clobber
           gh release view $tag --json tagName,url,assets --jq '"release: " + .tagName + " " + .url'

@@ -5,13 +5,16 @@
   "description": "Browser-free verification tools; not production UI dependencies",
   "scripts": {
     "pretest": "node scripts/crushfling-overlay.cjs",
-    "test": "node --test tests/settings.test.cjs tests/browser-ui.test.cjs tests/contracts.test.cjs tests/package.test.cjs tests/verification.test.cjs tests/project-map.test.cjs tests/showmode-dom.test.cjs tests/crushfling-ui.test.cjs tests/launchers.test.cjs",
+    "test": "node --test tests/settings.test.cjs tests/browser-ui.test.cjs tests/contracts.test.cjs tests/package.test.cjs tests/verification.test.cjs tests/project-map.test.cjs tests/showmode-dom.test.cjs tests/crushfling-ui.test.cjs tests/launchers.test.cjs tests/standalone.test.cjs",
     "verify": "node scripts/verify.cjs",
     "package:source": "node scripts/package-source.cjs",
     "overlay:sync": "node scripts/crushfling-overlay.cjs",
     "overlay:check": "node scripts/crushfling-overlay.cjs --check",
     "map:update": "node scripts/project-map.cjs",
-    "test:showmode": "node --check internal/browser/showmode_dom.js && node --test tests/showmode-dom.test.cjs"
+    "test:showmode": "node --check internal/browser/showmode_dom.js && node --test tests/showmode-dom.test.cjs",
+    "standalone:sync": "node scripts/build-crushfling-standalone.cjs",
+    "standalone:check": "node scripts/build-crushfling-standalone.cjs --check",
+    "standalone:zip": "node scripts/package-crushfling-standalone.cjs"
   },
   "devDependencies": {
     "jsdom": "26.1.0",

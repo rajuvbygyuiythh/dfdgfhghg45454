@@ -681,3 +681,28 @@ closes the browsers.
   from this sandbox (release-assets host), so the download itself was not
   exercised here.
 - README.md and START-HERE.txt now link straight to the release page.
+
+### 2026-10-20 (standalone build) — "only CrushFling" zip
+
+- New `scripts/build-crushfling-standalone.cjs` + `scripts/standalone/*.tmpl`
+  generate `standalone/`: a **nested Go module** (`module crushfling`) with the
+  unchanged engine (`internal/crushfling`, `internal/crushfling/email`,
+  `internal/proxy`, `cmd/crushfling` — copied, imports rewritten, tests
+  dropped), a small Wails shell (`main.go`, `app.go`) and the **same**
+  dashboard overlay (`crushfling.js`, `crushfling.css`, panel markup) wrapped
+  in its own `index.html` + `standalone.js` that opens the panel immediately
+  and swallows Escape. One source of truth: `npm run standalone:sync` /
+  `--check`.
+- `scripts/package-crushfling-standalone.cjs` builds
+  `release/CrushFling-Only-Windows-x64.zip` (both exes, run/install.bat, full
+  source, SHA-256 manifest; no data, logs or ChitChat files).
+- CI (`windows-build.yml`) now also builds the standalone app natively on
+  `windows-latest` (`go mod tidy`, `go build -tags desktop,production`), checks
+  both PE headers and publishes release tag **`crushfling`** with that single
+  zip as the only asset.
+- New `tests/standalone.test.cjs` (6 tests): generation sync, self-contained
+  module, six-tab page, bootstrap behaviour, CRLF/ASCII batch labels, zip
+  contents. `npm test` is now **89/89**.
+- `standalone/go.sum` is generated in CI (not committed) because this sandbox
+  serves `golang.org/x/*` from a local mirror; the real checksums come from
+  the Windows runner.

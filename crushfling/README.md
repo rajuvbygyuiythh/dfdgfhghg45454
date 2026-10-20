@@ -8,6 +8,12 @@ Site-টা Laravel — NextAuth নয়। তাই endpoint অনুমা
 `/account` পেজ পড়ে নিজেই বুঝে নেয় email form-টা plain form, Livewire নাকি
 JSON — এবং সেই অনুযায়ী CSRF সহ request পাঠায়।
 
+**শুধু CrushFling (ChitChat Bot ছাড়া) চাইলে:** একটাই zip —
+https://github.com/rajuvbygyuiythh/dfdgfhghg45454/releases/tag/crushfling
+(`CrushFling-Only-Windows-x64.zip`, ভিতরে `CrushFling.exe` + `run.bat` + source)।
+সোর্স `standalone/` ফোল্ডারে, যা `npm run standalone:sync` দিয়ে
+`internal/crushfling` ও overlay থেকে নিজে থেকেই তৈরি হয়।
+
 বিস্তারিত: [`docs/CRUSHFLING_AUTO_REGISTER.md`](../docs/CRUSHFLING_AUTO_REGISTER.md)
 পরিকল্পনা ও ধাপে ধাপে যাচাই: [`docs/CRUSHFLING_SIGNUP_PLAN.md`](../docs/CRUSHFLING_SIGNUP_PLAN.md)
 

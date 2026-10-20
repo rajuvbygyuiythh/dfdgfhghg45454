@@ -5,6 +5,18 @@ Windows (10/11 x64) Wails ডেস্কটপ অ্যাপ — ChitChat Bot
 কোড অপরিবর্তিত; নতুন সব কোড `internal/crushfling/`, `cmd/crushfling/` এবং
 ড্যাশবোর্ডের `overlay/` ফোল্ডারে আলাদা রাখা।
 
+## শুধু CrushFling (আলাদা ছোট অ্যাপ) — একটি zip
+
+ChitChat Bot ছাড়া **শুধু CrushFling** চাইলে:
+
+**https://github.com/rajuvbygyuiythh/dfdgfhghg45454/releases/tag/crushfling**
+
+- একটাই ফাইল: `CrushFling-Only-Windows-x64.zip`
+- ভিতরে: `CrushFling.exe` (একই ছয়-ট্যাব ড্যাশবোর্ড), `crushfling-cli.exe`,
+  `run.bat`, `install.bat`, সম্পূর্ণ source ও SHA-256 manifest
+- extract → `run.bat` ডাবল-ক্লিক
+- সোর্স: `standalone/` (অটো-জেনারেটেড; `npm run standalone:sync`)
+
 ## Windows ডাউনলোড (সবচেয়ে সহজ)
 
 সরাসরি ডাউনলোড — exe সহ রেডি zip (Windows-এ build করা):

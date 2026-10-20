@@ -1,0 +1,51 @@
+/* Minimal copy of the shared dashboard palette so the panel looks identical
+   to the version embedded in ChitChat Bot. */
+:root {
+  color-scheme: dark;
+  --bg: #161716;
+  --panel: #20221e;
+  --panel-alt: #282b25;
+  --panel-strong: #30342d;
+  --line: #3e4439;
+  --text: #eef2e8;
+  --muted: #b5beb0;
+  --accent: #83cb73;
+  --accent-strong: #6bb25b;
+  --warn: #d9b74d;
+  --danger: #d36a6a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+button, input, select, textarea { font: inherit; }
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13.5px;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.primary-button { background: var(--accent); border-color: var(--accent); color: #162010; }
+.primary-button:hover:not(:disabled) { background: var(--accent-strong); }
+.secondary-button { background: var(--panel-alt); color: var(--text); }
+.secondary-button:hover:not(:disabled) { border-color: var(--accent); }
+
+.pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pill.running { background: rgba(131, 203, 115, 0.18); color: var(--accent); }
+.pill.stopped { background: rgba(211, 106, 106, 0.18); color: #efb2b2; }
