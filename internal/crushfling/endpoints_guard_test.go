@@ -31,6 +31,9 @@ func newGuardRegister(t *testing.T) (*Register, *Session) {
 	if err != nil {
 		t.Fatalf("NewRegister: %v", err)
 	}
+	// Windows cannot delete the log file while the logger still holds it, so
+	// close the register before t.TempDir's cleanup runs (cleanups are LIFO).
+	t.Cleanup(func() { _ = r.Close() })
 	r.endpoints = EndpointConfig{} // exactly what an empty api.json + no discovery yields
 
 	sess, err := NewSession("", "")
@@ -104,6 +107,7 @@ func TestProfileRetriesAfterCSRFExpiry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewRegister: %v", err)
 	}
+	t.Cleanup(func() { _ = reg.Close() }) // close the run log before TempDir cleanup
 	reg.endpoints = EndpointConfig{AccountPath: "/account", ProfilePaths: []string{"/api/profile"}}
 
 	sess, err := NewSession("", "")
