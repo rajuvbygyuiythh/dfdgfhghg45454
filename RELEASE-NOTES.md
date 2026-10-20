@@ -1,5 +1,8 @@
 # Release notes — 2026-10-20
 
+**ডাউনলোড:** https://github.com/rajuvbygyuiythh/dfdgfhghg45454/releases/tag/windows-x64
+
+
 ## এই বিল্ডে কী আছে
 
 - ড্যাশবোর্ড: `build\bin\chitchatui.exe` (Windows x64, Wails production build, GUI)
