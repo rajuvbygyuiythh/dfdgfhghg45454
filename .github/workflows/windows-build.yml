@@ -14,6 +14,7 @@ on:
       - "cmd/chitchatui/frontend/**"
       - "scripts/package-release.cjs"
       - "scripts/source-files.cjs"
+      - "RELEASE-NOTES.md"
       - ".github/workflows/windows-build.yml"
   release:
     types: [published]

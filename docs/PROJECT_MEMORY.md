@@ -643,3 +643,22 @@ closes the browsers.
   fallback + CLI, install.bat builds all three binaries, every `goto`/`call`
   label exists). Full `npm test` now 83/83.
 - `README.md` and `START-HERE.txt` (Bengali quick start) added at the root.
+
+### 2026-10-20 (native Windows build) — GitHub Actions proof
+
+- New `.github/workflows/windows-build.yml` builds on `windows-latest`:
+  `go vet ./...`, `go test ./internal/crushfling/...`, `wails build -clean
+  -webview2 error`, both CLIs, a PE header/subsystem check (PE32+ x86-64; GUI
+  for the dashboard, console for the CLIs) and the release zip. It uploads
+  artifacts and (on push) publishes the zip on a short-lived
+  `ci/windows-zip-<run_id>` branch because artifact downloads go through
+  Azure blob storage, which this sandbox cannot reach.
+- **Run 39367503503 PASSED on Windows**: vet, all Go tests, Wails build and
+  CLI builds. The binaries are 25.9 MB / 14.2 MB / 10.8 MB and are the ones in
+  the released zip — no cross-compilation.
+- Windows exposed a real test-hygiene bug: three tests left the run-log file
+  open, and `t.TempDir` could not remove it (`unlinkat ... being used by
+  another process`). Fixed by closing the `Register` in cleanup (LIFO runs
+  before TempDir removal). All tests now pass on Windows too.
+- Earlier cross-compiled exes were replaced by the CI-built ones; the zip was
+  fetched from the CI branch and its manifest verified locally.
