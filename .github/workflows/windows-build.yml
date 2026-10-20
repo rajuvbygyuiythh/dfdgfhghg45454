@@ -47,10 +47,27 @@ jobs:
       - name: Download Go modules
         run: go mod download
 
-      - name: Vet and unit tests
+      - name: Vet
+        shell: pwsh
         run: |
-          go vet ./...
-          go test -count=1 ./internal/crushfling/...
+          $out = go vet ./... 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) {
+            $msg = ($out -replace '%','%25' -replace "`r?`n",'%0A')
+            Write-Host "::error title=go-vet::$msg"
+            exit 1
+          }
+          Write-Host "go vet ./... OK"
+
+      - name: Unit tests
+        shell: pwsh
+        run: |
+          $out = go test -count=1 ./internal/crushfling/... 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) {
+            $msg = ($out -replace '%','%25' -replace "`r?`n",'%0A')
+            Write-Host "::error title=go-test::$msg"
+            exit 1
+          }
+          $out.Trim()
 
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
