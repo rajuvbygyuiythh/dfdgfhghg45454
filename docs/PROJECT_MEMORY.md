@@ -667,3 +667,17 @@ closes the browsers.
   `cmd/chitchatui/frontend/wailsjs/go/main/App.{js,d.ts}` and `models.ts`;
   those stale bindings were refreshed in the repo so the dashboard's
   generated JS now includes every CrushFling method.
+
+### 2026-10-20 (release publishing) — Windows-only distribution
+
+- The build workflow no longer creates short-lived `ci/windows-zip-<run>`
+  branches. It now publishes a normal GitHub Release:
+  **https://github.com/rajuvbygyuiythh/dfdgfhghg45454/releases/tag/windows-x64**
+  with `CrushFling-Bot-Windows-x64.zip` plus the three `.exe` files. Assets are
+  replaced (`gh release upload --clobber`) on every successful Windows build,
+  so the tag always points at the newest native build.
+- Run 39368480978 (commit `67bdb3a`) passed and published that release; the
+  API reports sha256 digests for all four assets. Asset downloads are blocked
+  from this sandbox (release-assets host), so the download itself was not
+  exercised here.
+- README.md and START-HERE.txt now link straight to the release page.

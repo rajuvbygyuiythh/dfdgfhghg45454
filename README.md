@@ -5,6 +5,19 @@ Windows (10/11 x64) Wails ডেস্কটপ অ্যাপ — ChitChat Bot
 কোড অপরিবর্তিত; নতুন সব কোড `internal/crushfling/`, `cmd/crushfling/` এবং
 ড্যাশবোর্ডের `overlay/` ফোল্ডারে আলাদা রাখা।
 
+## Windows ডাউনলোড (সবচেয়ে সহজ)
+
+সরাসরি ডাউনলোড — exe সহ রেডি zip (Windows-এ build করা):
+
+**https://github.com/rajuvbygyuiythh/dfdgfhghg45454/releases/tag/windows-x64**
+
+- ফাইল: `CrushFling-Bot-Windows-x64.zip` (~21 MB)
+- zip পুরোটা extract → `run.bat` ডাবল-ক্লিক
+- আলাদা করে শুধু exe-ও ওই পেজ থেকে নামানো যায়
+  (`chitchatui.exe`, `chitchatbot.exe`, `crushfling.exe`)
+
+প্রতিবার Windows build সফল হলে GitHub Actions এই release-টি নিজে আপডেট করে।
+
 ## দ্রুত শুরু (Windows)
 
 **উপায় ১ — রেডি zip:** zip পুরোটা extract করুন → `run.bat` ডাবল-ক্লিক।

