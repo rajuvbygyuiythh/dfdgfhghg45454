@@ -30,6 +30,15 @@
   হয়েছে, যা Wails CLI যেভাবে build করে সেই একই পথ।
 - Windows ইনস্টলার পথ (WebView2 ইনস্টল, UAC) — বাস্তব Windows মেশিনে যাচাই বাকি।
 
+## Prebuilt exe সম্পর্কে সৎ নোট
+
+- exe তিনটি Linux sandbox-এ cross-compile করা; Windows-এ চালিয়ে দেখা হয়নি।
+- sandbox থেকে sourcehut (`git.sr.ht`) পৌঁছায় না, তাই Wails-এর Windows
+  notification নির্ভরতা `go-toast` একটি compile-only stub দিয়ে বানানো
+  হয়েছে (notification no-op)। এই ড্যাশবোর্ড notification ব্যবহার করে না,
+  তাই কার্যকারিতায় পার্থক্য নেই। সম্পূর্ণ আসল dependency সহ native build
+  পেতে `install.bat` চালান।
+
 ## নিরাপত্তা
 
 - `data\`, `crushfling\data\`, cookies, tokens, logs কোথাও নেই।
