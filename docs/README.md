@@ -12,8 +12,12 @@ Clean source-only project for the Windows Wails desktop app and CLI worker.
 ## Not included
 
 No runtime account data is included: no `data/` folder, cookies, browser profiles,
-login JSON, session storage, tokens, Badger DB, logs, cache, binaries, Chromium,
-or WebView2 runtime.
+login JSON, session storage, tokens, Badger DB, logs or cache.
+
+The git source tree has no binaries. The ready-to-run release zip built by
+`node scripts/package-release.cjs` adds `build/bin/chitchatui.exe`,
+`chitchatbot.exe` and `crushfling.exe` (never Chromium or the WebView2
+runtime — Windows provides WebView2).
 
 ## Build on Windows (one click)
 
