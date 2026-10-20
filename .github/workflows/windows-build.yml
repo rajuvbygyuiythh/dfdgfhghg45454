@@ -19,7 +19,7 @@ on:
     types: [published]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows:
@@ -127,3 +127,19 @@ jobs:
           path: release/CrushFling-Bot-Windows-x64.zip
           if-no-files-found: error
           retention-days: 30
+
+      # Artifact downloads are signed URLs on blob storage, which some
+      # environments cannot reach. Publishing the same zip on a short-lived
+      # CI branch lets any client with plain git access fetch the native build.
+      - name: Publish zip to CI branch
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          $branch = "ci/windows-zip-${{ github.run_id }}"
+          git checkout -B $branch
+          Copy-Item release/CrushFling-Bot-Windows-x64.zip windows-build.zip
+          git add -f windows-build.zip
+          git commit -m "Windows x64 build ${{ github.run_id }}"
+          git push origin "HEAD:refs/heads/$branch"
