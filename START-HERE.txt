@@ -1,0 +1,37 @@
+ChitChat Bot + CrushFling Auto Register
+=======================================
+
+০) রেডি zip নামাতে:
+   https://github.com/rajuvbygyuiythh/dfdgfhghg45454/releases/tag/windows-x64
+   ফাইল: CrushFling-Bot-Windows-x64.zip
+
+১) এই zip পুরোটা একটা ফোল্ডারে extract করুন (zip-এর ভিতর থেকে সরাসরি চালাবেন না)।
+
+২) run.bat ডাবল-ক্লিক করুন।
+   - build\bin\chitchatui.exe আগেই বানানো আছে, তাই ড্যাশবোর্ড সাথে সাথে খুলবে।
+   - Windows 10/11-এ WebView2 সাধারণত আগে থেকেই থাকে। না থাকলে
+     https://developer.microsoft.com/microsoft-edge/webview2/ থেকে ইনস্টল করুন
+     (অথবা install.bat চালান, সেটি নিজেই চেষ্টা করে)।
+
+৩) ড্যাশবোর্ডে:
+   Pictures  -> ছবির ফোল্ডার বেছে নিন
+   Proxy     -> দরকার হলে proxy ফাইল/লাইন দিন, Validate চাপুন
+   Bio list  -> Load bio.txt... চেপে নিজের বায়ো ফাইল দিন (প্রতি লাইনে একটি)
+   Browser   -> headless না visible বেছে নিন, concurrency ঠিক করুন
+   Settings  -> account সংখ্যা, email provider, delay, retries
+   তারপর উপরের Start চাপুন। Stop চাপলে রান থামে এবং খোলা সব ব্রাউজার বন্ধ হয়।
+
+৪) যদি prebuilt exe না চলে বা নিজে build করতে চান:
+   install.bat ডাবল-ক্লিক করুন (Go 1.25+, Wails CLI, WebView2 ইনস্টল করে)।
+   প্রথমবার ৫-১৫ মিনিট লাগতে পারে; লগ থাকবে build\install.log এ।
+
+৫) CLI:
+   run.bat cli --check
+   run.bat cli --count 1 --email mailtm -v
+
+ডেটা কোথায়:  data\  এবং  crushfling\data\
+(accounts.json, accounts.csv, bio.txt, pictures\, logs\)
+
+কোনো অ্যাকাউন্ট/কুকি/টোকেন/লগ এই প্যাকেজে নেই — শুধু পরিষ্কার প্রজেক্ট।
+
+বিস্তারিত: README.md, docs\START-HERE.md, crushfling\README.md

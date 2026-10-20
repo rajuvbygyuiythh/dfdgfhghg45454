@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CrushFling Auto Register</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="crushfling.css" />
+  </head>
+  <body>
+    <div id="crushfling-overlay" class="cf-overlay" hidden>
+    <section class="cf-panel" role="dialog" aria-modal="true" aria-labelledby="cf-title">
+    <header class="cf-head">
+    <div class="cf-head-title">
+    <h1 id="cf-title">💘 CrushFling Auto Register</h1>
+    <p class="cf-sub">Temp mail → magic link (same session) → avatar → profile.
+    Logs: <code>data/crushfling/logs</code></p>
+    </div>
+    <div class="cf-head-right">
+    <span id="cf-running" class="pill stopped">Stopped</span>
+    <button type="button" id="cf-start" class="primary-button cf-run">▶ Start</button>
+    <button type="button" id="cf-stop" class="cf-stop" disabled>■ Stop</button>
+    <button type="button" id="cf-close" class="secondary-button" aria-label="Close CrushFling panel">✕</button>
+    </div>
+    </header>
+
+    <div class="cf-stats">
+    <div class="cf-stat"><span>Success</span><strong id="cf-ok">0</strong></div>
+    <div class="cf-stat"><span>Failed</span><strong id="cf-fail">0</strong></div>
+    <div class="cf-stat"><span>Total</span><strong id="cf-total">0</strong></div>
+    <div class="cf-stat"><span>Pictures left</span><strong id="cf-pic-count">–</strong></div>
+    <div class="cf-stat"><span>Bios left</span><strong id="cf-cap-count">–</strong></div>
+    <div class="cf-stat"><span>Accounts saved</span><strong id="cf-accounts">–</strong></div>
+    </div>
+    <p id="cf-last-error" class="cf-path" role="status"></p>
+
+    <nav class="cf-tabs" aria-label="CrushFling sections">
+    <button type="button" id="cf-tab-pictures" class="cf-tab active" data-cf-pane="pictures">1 · Pictures</button>
+    <button type="button" id="cf-tab-proxy" class="cf-tab" data-cf-pane="proxy">2 · Proxy</button>
+    <button type="button" id="cf-tab-bio" class="cf-tab" data-cf-pane="bio">3 · Bio list</button>
+    <button type="button" id="cf-tab-browser" class="cf-tab" data-cf-pane="browser">4 · Browser</button>
+    <button type="button" id="cf-tab-settings" class="cf-tab" data-cf-pane="settings">5 · Settings</button>
+    <button type="button" id="cf-tab-logs" class="cf-tab" data-cf-pane="logs">6 · Logs</button>
+    </nav>
+
+    <!-- 1 · Pictures ---------------------------------------------------->
+    <section class="cf-pane" id="cf-pane-pictures" data-cf-pane="pictures">
+    <div class="cf-grid">
+    <label class="cf-wide"><span>Picture folder (blank = &lt;data&gt;/pictures)</span>
+    <span class="cf-row">
+    <input id="cf-avatar" type="text" placeholder="default: &lt;data&gt;/pictures">
+    <button type="button" id="cf-pic-browse" class="secondary-button">Browse…</button>
+    <button type="button" id="cf-pic-open" class="secondary-button">Open folder</button>
+    </span>
+    </label>
+    </div>
+    <p class="cf-note">One picture per account, moved to <code>used/</code> only after the
+    profile is created. JPG/PNG/WEBP, one female portrait each.</p>
+    <p id="cf-pic-status" class="cf-path"></p>
+    </section>
+
+    <!-- 2 · Proxy ------------------------------------------------------->
+    <section class="cf-pane" id="cf-pane-proxy" data-cf-pane="proxy" hidden>
+    <div class="cf-grid">
+    <label class="cf-wide"><span>Proxy list file</span>
+    <span class="cf-row">
+    <input id="cf-proxy-file" type="text" placeholder="proxies.txt">
+    <button type="button" id="cf-proxy-browse" class="secondary-button">Browse…</button>
+    <button type="button" id="cf-proxy-validate" class="secondary-button">Validate</button>
+    </span>
+    </label>
+    <label class="cf-wide"><span>Proxy list (host:port:user:pass, or socks5://…, one per line)</span>
+    <textarea id="cf-proxy-entries" rows="5" spellcheck="false"></textarea>
+    </label>
+    </div>
+    <p class="cf-note">One sticky proxy per account. Validation is an offline
+    format check; it never opens a connection.</p>
+    <p id="cf-proxy-status" class="cf-path" role="status"></p>
+    </section>
+
+    <!-- 3 · Bio list ---------------------------------------------------->
+    <section class="cf-pane" id="cf-pane-bio" data-cf-pane="bio" hidden>
+    <div class="cf-grid">
+    <label class="cf-wide"><span>Active bio file</span>
+    <span class="cf-row">
+    <input id="cf-bio-file" type="text" readonly placeholder="&lt;data&gt;/bio.txt">
+    <button type="button" id="cf-bio-load" class="secondary-button">Load bio.txt…</button>
+    <button type="button" id="cf-bio-refresh" class="secondary-button">Refresh</button>
+    </span>
+    </label>
+    </div>
+    <p class="cf-note">One line = one bio. The used line is deleted automatically
+    after the account is verified; a failed attempt gives it back.
+    <code>@myhandle</code> is replaced with the profile's platform username.</p>
+    <p id="cf-bio-status" class="cf-path" role="status"></p>
+    <h3 class="cf-h3">Next lines</h3>
+    <ol id="cf-bio-preview" class="cf-preview"></ol>
+    </section>
+
+    <!-- 4 · Browser ----------------------------------------------------->
+    <section class="cf-pane" id="cf-pane-browser" data-cf-pane="browser" hidden>
+    <div class="cf-toggles">
+    <label><input type="checkbox" id="cf-headless"> Headless browser (no window)</label>
+    <label><input type="checkbox" id="cf-browser"> Use the browser for the sign-in request (Cloudflare)</label>
+    <label><input type="checkbox" id="cf-browser-verify" checked> Browser verify if no session cookie</label>
+    </div>
+    <div class="cf-grid">
+    <label><span>Concurrency</span><input id="cf-conc" type="number" min="1" max="10" step="1" value="1"></label>
+    <label><span>Browsers open now</span><input id="cf-browsers-open" type="text" readonly value="0"></label>
+    </div>
+    <p class="cf-note"><strong>Stop</strong> cancels the run and closes every Chromium
+    window immediately — the counter above should return to 0.</p>
+    <div class="cf-actions">
+    <button type="button" id="cf-close-browsers" class="secondary-button">Close all browsers</button>
+    </div>
+    <p id="cf-browser-status" class="cf-path" role="status"></p>
+    </section>
+
+    <!-- 5 · Settings ---------------------------------------------------->
+    <section class="cf-pane" id="cf-pane-settings" data-cf-pane="settings" hidden>
+    <div class="cf-grid">
+    <label><span>Accounts to create</span><input id="cf-count" type="number" min="1" max="500" step="1" value="1"></label>
+    <label><span>Data folder (blank = app default)</span><input id="cf-data" type="text" placeholder="default: app data folder / crushfling"></label>
+    <label><span>Email provider</span>
+    <select id="cf-email">
+    <option value="mailtm">mail.tm (default)</option>
+    <option value="1secmail">1secmail</option>
+    <option value="guerrilla">guerrilla mail</option>
+    <option value="custom">custom catch-all</option>
+    </select>
+    </label>
+    <label><span>Custom email (custom provider only)</span><input id="cf-custom-email" type="text" placeholder="you@yourdomain.com" disabled></label>
+    <label><span>Mail hook URL (optional)</span><input id="cf-mail-hook" type="text" placeholder="http://127.0.0.1:8081/inbox" disabled></label>
+    <label><span>2captcha key (optional)</span><input id="cf-captcha" type="password" autocomplete="off"></label>
+    <label><span>Mail poll (seconds)</span><input id="cf-poll" type="number" min="1" max="60" step="1" value="3"></label>
+    <label><span>Mail timeout (seconds)</span><input id="cf-timeout" type="number" min="30" max="900" step="10" value="120"></label>
+    <label><span>Retries per account</span><input id="cf-retries" type="number" min="0" max="10" step="1" value="3"></label>
+    <label><span>Min delay (ms)</span><input id="cf-min-delay" type="number" min="0" max="60000" step="100" value="1500"></label>
+    <label><span>Max delay (ms)</span><input id="cf-max-delay" type="number" min="0" max="60000" step="100" value="3500"></label>
+    <label class="cf-wide"><span>Paste a magic link (single account, clicked in the same session)</span><input id="cf-pasted-link" type="text" placeholder="https://crushfling.com/...?token=..."></label>
+    </div>
+    <div class="cf-toggles">
+    <label><input type="checkbox" id="cf-debug" checked> Debug logs + failure dumps</label>
+    <label><input type="checkbox" id="cf-trace"> Trace HTTP bodies (redacted)</label>
+    </div>
+    <div class="cf-actions">
+    <button type="button" id="cf-preview" class="secondary-button">Preview next profile</button>
+    <button type="button" id="cf-export" class="secondary-button">Export accounts (JSON)</button>
+    <button type="button" id="cf-refresh" class="secondary-button">Refresh</button>
+    </div>
+    </section>
+
+    <!-- 6 · Logs -------------------------------------------------------->
+    <section class="cf-pane" id="cf-pane-logs" data-cf-pane="logs" hidden>
+    <div class="cf-log-head">
+    <h2>Live log</h2>
+    <label class="cf-filter"><span>Level</span>
+    <select id="cf-log-filter" aria-label="Filter CrushFling log">
+    <option value="all">All</option>
+    <option value="debug">Debug+</option>
+    <option value="info">Info+</option>
+    <option value="warn">Warnings</option>
+    <option value="error">Errors</option>
+    </select>
+    </label>
+    </div>
+    <div class="cf-actions">
+    <button type="button" id="cf-open-logs" class="secondary-button">Open log folder</button>
+    <button type="button" id="cf-debug-report" class="secondary-button">Debug report</button>
+    <button type="button" id="cf-clear" class="secondary-button">Clear view</button>
+    </div>
+    <p id="cf-log-path" class="cf-path"></p>
+    <pre id="cf-log" class="cf-log" aria-live="polite"></pre>
+    </section>
+
+    <p id="cf-hint" class="cf-hint" role="status"></p>
+    </section>
+    </div>
+    <script src="crushfling.js"></script>
+    <script src="standalone.js"></script>
+  </body>
+</html>

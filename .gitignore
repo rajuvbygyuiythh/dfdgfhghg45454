@@ -1,5 +1,6 @@
 # Runtime-only data: never commit accounts, sessions, cookies, logs, or Badger DB files.
 data/
+crushfling/data/
 
 # Local/browser/build artefacts
 build/

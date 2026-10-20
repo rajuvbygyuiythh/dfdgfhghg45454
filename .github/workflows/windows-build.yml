@@ -1,0 +1,214 @@
+name: Windows build
+
+# Builds the real Windows executables on a Windows runner (no cross-compile)
+# and uploads them together with the ready-to-run release zip.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - "wails.json"
+      - "cmd/chitchatui/frontend/**"
+      - "scripts/package-release.cjs"
+      - "scripts/source-files.cjs"
+      - "scripts/build-crushfling-standalone.cjs"
+      - "scripts/package-crushfling-standalone.cjs"
+      - "scripts/standalone/**"
+      - "RELEASE-NOTES.md"
+      - ".github/workflows/windows-build.yml"
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Build Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Toolchain versions
+        run: |
+          go version
+          node --version
+          npm --version
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Vet
+        shell: pwsh
+        run: |
+          $out = go vet ./... 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) {
+            $msg = ($out -replace '%','%25' -replace "`r?`n",'%0A')
+            Write-Host "::error title=go-vet::$msg"
+            exit 1
+          }
+          Write-Host "go vet ./... OK"
+
+      - name: Unit tests
+        shell: pwsh
+        run: |
+          $out = go test -count=1 ./internal/crushfling/... 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) {
+            $msg = ($out -replace '%','%25' -replace "`r?`n",'%0A')
+            Write-Host "::error title=go-test::$msg"
+            exit 1
+          }
+          $out.Trim()
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+
+      - name: Build dashboard (Wails, Windows GUI)
+        shell: pwsh
+        run: |
+          $env:PATH = "$env:USERPROFILE\go\bin;$env:PATH"
+          wails version
+          wails build -clean -webview2 error
+          if (-not (Test-Path "build/bin/chitchatui.exe")) { throw "chitchatui.exe missing" }
+
+      - name: Build CLI workers
+        run: |
+          go build -trimpath -ldflags "-w -s" -o build/bin/chitchatbot.exe ./cmd/chitchatbot
+          go build -trimpath -ldflags "-w -s" -o build/bin/crushfling.exe ./cmd/crushfling
+
+      - name: Verify PE headers and subsystem
+        shell: pwsh
+        run: |
+          $expected = @{ "chitchatui.exe" = 2; "chitchatbot.exe" = 3; "crushfling.exe" = 3 }
+          foreach ($name in $expected.Keys) {
+            $path = "build/bin/$name"
+            $bytes = [IO.File]::ReadAllBytes($path)
+            if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "$name is not a PE (MZ)" }
+            $pe = [BitConverter]::ToInt32($bytes, 0x3C)
+            $machine = [BitConverter]::ToUInt16($bytes, $pe + 4)
+            $magic = [BitConverter]::ToUInt16($bytes, $pe + 24)
+            $subsystem = [BitConverter]::ToUInt16($bytes, $pe + 24 + 68)
+            if ($machine -ne 0x8664) { throw "$name machine=$machine, expected x86-64" }
+            if ($magic -ne 0x20B) { throw "$name is not PE32+" }
+            if ($subsystem -ne $expected[$name]) { throw "$name subsystem=$subsystem, expected $($expected[$name])" }
+            $size = [math]::Round($bytes.Length / 1MB, 1)
+            Write-Host ("OK  {0,-16} PE32+ x86-64 subsystem={1} size={2} MB" -f $name, $subsystem, $size)
+          }
+
+      - name: Generate standalone CrushFling project
+        run: node scripts/build-crushfling-standalone.cjs
+
+      - name: Build standalone CrushFling (Windows GUI + CLI)
+        shell: pwsh
+        run: |
+          Push-Location standalone
+          $out = go mod tidy 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error title=standalone-tidy::$($out -replace '%','%25' -replace "`r?`n",'%0A')"
+            Pop-Location; exit 1
+          }
+          $env:CGO_ENABLED = "0"
+          go build -trimpath -tags desktop,production -ldflags "-w -s -H windowsgui" -o CrushFling.exe .
+          if ($LASTEXITCODE -ne 0) { Pop-Location; throw "standalone dashboard build failed" }
+          go build -trimpath -ldflags "-w -s" -o crushfling-cli.exe ./cmd/crushfling
+          if ($LASTEXITCODE -ne 0) { Pop-Location; throw "standalone CLI build failed" }
+          foreach ($name in @("CrushFling.exe", "crushfling-cli.exe")) {
+            $bytes = [IO.File]::ReadAllBytes((Join-Path (Get-Location) $name))
+            if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "$name is not a PE file" }
+            $pe = [BitConverter]::ToInt32($bytes, 0x3C)
+            $machine = [BitConverter]::ToUInt16($bytes, $pe + 4)
+            $subsystem = [BitConverter]::ToUInt16($bytes, $pe + 24 + 68)
+            if ($machine -ne 0x8664) { throw "$name machine=$machine" }
+            Write-Host ("OK  {0,-20} PE32+ x86-64 subsystem={1} size={2} MB" -f $name, $subsystem, [math]::Round($bytes.Length / 1MB, 1))
+          }
+          Pop-Location
+
+      - name: Package the CrushFling-only zip
+        run: node scripts/package-crushfling-standalone.cjs
+
+      - name: Upload CrushFling-only zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrushFling-Only-Windows-x64
+          path: release/CrushFling-Only-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Build clean release zip
+        run: |
+          npm ci --ignore-scripts
+          node scripts/package-release.cjs
+
+      - name: Upload executables
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-exe
+          path: |
+            build/bin/chitchatui.exe
+            build/bin/chitchatbot.exe
+            build/bin/crushfling.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload release zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrushFling-Bot-Windows-x64
+          path: release/CrushFling-Bot-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      # A normal GitHub Release gives a plain download link that works from a
+      # browser (artifacts need a signed-in API call). The tag stays on the
+      # newest Windows build; assets are replaced on every run.
+      - name: Publish Windows release
+        if: github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "windows-x64"
+          $zip = "release/CrushFling-Bot-Windows-x64.zip"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --target "${{ github.sha }}" `
+              --title "Windows x64 - ready to run (run.bat)" `
+              --notes "Native Windows build from GitHub Actions (windows-latest). Extract the whole zip, then double-click run.bat. install.bat rebuilds everything locally. No accounts, cookies, sessions or logs are included." `
+              --latest
+          }
+          gh release upload $tag $zip --clobber
+          gh release upload $tag build/bin/chitchatui.exe build/bin/chitchatbot.exe build/bin/crushfling.exe --clobber
+          gh release view $tag --json tagName,url,assets --jq '"release: " + .tagName + " " + .url'
+
+      # The owner only needs CrushFling, so it gets its own release with a
+      # single asset: one zip, no ChitChat Bot files.
+      - name: Publish CrushFling-only release
+        if: github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "crushfling"
+          $zip = "release/CrushFling-Only-Windows-x64.zip"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --target "${{ github.sha }}" `
+              --title "CrushFling Auto Register - Windows x64 (only CrushFling)" `
+              --notes "Standalone CrushFling app. Extract the zip, then double-click run.bat. Contains CrushFling.exe (dashboard), crushfling-cli.exe and the source to rebuild with install.bat. No accounts, cookies, sessions or logs." `
+              --latest
+          }
+          gh release upload $tag $zip --clobber
+          gh release view $tag --json tagName,url,assets --jq '"release: " + .tagName + " " + .url'

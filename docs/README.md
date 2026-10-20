@@ -1,4 +1,4 @@
-﻿# ChitChat Bot â€” EVAChat Flow source
+# ChitChat Bot â€” EVAChat Flow source
 
 Clean source-only project for the Windows Wails desktop app and CLI worker.
 
@@ -12,19 +12,25 @@ Clean source-only project for the Windows Wails desktop app and CLI worker.
 ## Not included
 
 No runtime account data is included: no `data/` folder, cookies, browser profiles,
-login JSON, session storage, tokens, Badger DB, logs, cache, binaries, Chromium,
-or WebView2 runtime.
+login JSON, session storage, tokens, Badger DB, logs or cache.
+
+The git source tree has no binaries. The ready-to-run release zip built by
+`node scripts/package-release.cjs` adds `build/bin/chitchatui.exe`,
+`chitchatbot.exe` and `crushfling.exe` (never Chromium or the WebView2
+runtime — Windows provides WebView2).
 
 ## Build on Windows (one click)
 
 Double-click **`install.bat`** in the project root. It installs what is missing
 (Go 1.25+, Wails CLI v2.12.0, WebView2 runtime), builds the dashboard the same
 way it was originally built (`wails build -clean -webview2 error`), builds the
-CLI worker, and offers to start `build\bin\chitchatui.exe`. Afterwards use
-**`run-dashboard.bat`**. Log: `build\install.log`.
+CLI workers, and offers to start `build\bin\chitchatui.exe`. Afterwards use
+**`run.bat`** (`run-dashboard.bat` is an alias). Log: `build\install.log`.
 
 ```bat
 install.bat          :: install + build + run
+run.bat              :: start the prebuilt dashboard
+run.bat cli --check  :: run the CrushFling command-line worker
 install.bat build    :: only rebuild
 install.bat run      :: only start the dashboard
 install.bat bundle   :: portable bundle with WebView2 + Chromium (scripts\bundle-windows.ps1)

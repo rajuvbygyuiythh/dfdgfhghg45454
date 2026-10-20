@@ -177,6 +177,9 @@ if not exist "%BIN%" mkdir "%BIN%"
 set "GOFLAGS="
 set "CGO_ENABLED=0"
 
+echo   [..] go mod download  ^(first run downloads dependencies^)
+go mod download >> "%LOG%" 2>&1
+
 call :check_wails
 if "%WAILS_OK%"=="1" (
     echo   [..] wails build -clean -webview2 error   ^(this is how the dashboard was originally built^)
@@ -195,6 +198,13 @@ echo   [OK] build\bin\chitchatui.exe built.
 :build_cli
 echo   [..] go build .\cmd\chitchatbot  ^(CLI worker^)
 go build -o "%BIN%\chitchatbot.exe" .\cmd\chitchatbot >> "%LOG%" 2>&1
+echo   [..] go build .\cmd\crushfling  ^(CrushFling auto-register CLI^)
+go build -o "%BIN%\crushfling.exe" .\cmd\crushfling >> "%LOG%" 2>&1
+if exist "%BIN%\crushfling.exe" (
+    echo   [OK] build\bin\crushfling.exe built.
+) else (
+    echo   [!!] CrushFling CLI build failed ^(dashboard still usable^). See build\install.log.
+)
 if exist "%BIN%\chitchatbot.exe" (
     echo   [OK] build\bin\chitchatbot.exe built.
 ) else (
@@ -205,9 +215,10 @@ echo.
 echo  ==================================================
 echo   DONE.  Dashboard exe : build\bin\chitchatui.exe
 echo          CLI worker    : build\bin\chitchatbot.exe
+echo          CrushFling CLI: build\bin\crushfling.exe
 echo          Runtime data  : %ROOT%\data\   ^(created on first run^)
 echo          EVAChat TXT   : %ROOT%\data\eva_chat\  ^(seeded on first EVAChat start^)
-echo   Next time just double-click run-dashboard.bat
+echo   Next time just double-click run.bat
 echo  ==================================================
 echo.
 if /i "%MODE%"=="build" goto :end

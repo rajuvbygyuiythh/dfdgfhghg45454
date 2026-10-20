@@ -1,0 +1,173 @@
+    /* CrushFling Auto Register overlay: feature-local, does not touch the
+       dashboard cards. The panel is an overlay so the two dashboard pages and
+       their bindings stay exactly as they are. */
+    .cf-sidebar-link {
+      width: 100%;
+      margin-top: 8px;
+      padding: 11px 14px;
+      border: 1px solid rgba(255, 121, 176, 0.4);
+      border-radius: 8px;
+      background: rgba(255, 121, 176, 0.1);
+      color: #ffb8d5;
+      text-align: left;
+      font-size: 14px;
+    }
+    .cf-sidebar-link:hover { background: rgba(255, 121, 176, 0.18); }
+    .cf-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      background: rgba(8, 10, 8, 0.74);
+    }
+    .cf-overlay[hidden] { display: none; }
+    .cf-panel {
+      width: min(1140px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      padding: 20px 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ------------------------------------------------------------ header */
+    .cf-head {
+      position: sticky;
+      top: -20px;
+      z-index: 2;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin: -20px -22px 0;
+      padding: 18px 22px 14px;
+      background: linear-gradient(180deg, var(--panel) 78%, rgba(32, 34, 30, 0.88));
+      border-bottom: 1px solid var(--line);
+    }
+    .cf-head h1 { margin: 0 0 4px; font-size: 20px; }
+    .cf-head-title { min-width: 0; }
+    .cf-sub { margin: 0; color: var(--muted); font-size: 13px; }
+    .cf-head-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .cf-run { min-width: 96px; }
+    .cf-stop {
+      background: rgba(211, 106, 106, 0.16);
+      border-color: rgba(211, 106, 106, 0.55);
+      color: #f3c0c0;
+      min-width: 96px;
+    }
+    .cf-stop:hover:not(:disabled) { background: rgba(211, 106, 106, 0.28); }
+
+    /* ------------------------------------------------------------- stats */
+    .cf-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin: 16px 0 10px; }
+    .cf-stat { padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-alt); }
+    .cf-stat span { display: block; color: var(--muted); font-size: 12px; }
+    .cf-stat strong { font-size: 20px; }
+
+    /* -------------------------------------------------------------- tabs */
+    .cf-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .cf-tab {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+    .cf-tab:hover { border-color: var(--accent); color: var(--text); }
+    .cf-tab.active {
+      background: rgba(131, 203, 115, 0.16);
+      border-color: rgba(131, 203, 115, 0.55);
+      color: var(--accent);
+    }
+    .cf-pane[hidden] { display: none; }
+    .cf-pane { min-height: 210px; }
+
+    /* ------------------------------------------------------------ fields */
+    .cf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .cf-grid label { display: grid; gap: 5px; font-size: 13px; color: var(--muted); }
+    .cf-grid input, .cf-grid select, .cf-grid textarea {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-alt);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .cf-grid input:disabled { opacity: 0.5; }
+    .cf-wide { grid-column: 1 / -1; }
+    .cf-row { display: flex; gap: 8px; align-items: center; }
+    .cf-row input { flex: 1 1 auto; min-width: 0; }
+    .cf-row button { flex: 0 0 auto; white-space: nowrap; }
+    .cf-toggles { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0; font-size: 13px; color: var(--muted); }
+    .cf-toggles label { display: inline-flex; align-items: center; gap: 6px; }
+    .cf-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .cf-hint { min-height: 18px; margin: 14px 0 0; color: var(--muted); font-size: 13px; }
+    .cf-hint.cf-error-text { color: var(--danger); }
+    .cf-hint.cf-ok-text { color: var(--accent); }
+    .cf-path { margin: 0 0 8px; color: var(--muted); font-size: 12px; word-break: break-all; }
+    .cf-path.cf-error-text { color: var(--danger); }
+    .cf-path.cf-ok-text { color: var(--accent); }
+    .cf-note {
+      margin: 12px 0 6px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+    .cf-h3 { margin: 14px 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .cf-preview {
+      margin: 0;
+      padding-left: 22px;
+      max-height: 160px;
+      overflow: auto;
+      color: var(--text);
+      font-size: 13px;
+    }
+    .cf-preview li { margin-bottom: 4px; }
+
+    /* -------------------------------------------------------------- logs */
+    .cf-log-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
+    .cf-log-head h2 { margin: 0; font-size: 15px; }
+    .cf-filter { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+    .cf-filter select {
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-alt);
+      color: var(--text);
+    }
+    .cf-log {
+      min-height: 220px;
+      max-height: 340px;
+      margin: 8px 0 0;
+      padding: 12px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #10120f;
+      color: #cfe8c7;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    @media (max-width: 900px) {
+      .cf-grid { grid-template-columns: 1fr; }
+      .cf-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .cf-head { flex-direction: column; }
+      .cf-head-right { justify-content: flex-start; }
+    }

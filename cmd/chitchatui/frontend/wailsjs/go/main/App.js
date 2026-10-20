@@ -6,6 +6,10 @@ export function CleanProfiles() {
   return window['go']['main']['App']['CleanProfiles']();
 }
 
+export function ClearBotLog() {
+  return window['go']['main']['App']['ClearBotLog']();
+}
+
 export function ClearLoadedMessages() {
   return window['go']['main']['App']['ClearLoadedMessages']();
 }
@@ -18,6 +22,54 @@ export function ClearShowModeLog() {
   return window['go']['main']['App']['ClearShowModeLog']();
 }
 
+export function CloseCrushBrowsers() {
+  return window['go']['main']['App']['CloseCrushBrowsers']();
+}
+
+export function CreateCrushDebugReport() {
+  return window['go']['main']['App']['CreateCrushDebugReport']();
+}
+
+export function GetBotLog(arg1) {
+  return window['go']['main']['App']['GetBotLog'](arg1);
+}
+
+export function GetCaptionCount() {
+  return window['go']['main']['App']['GetCaptionCount']();
+}
+
+export function GetCrushBioInfo() {
+  return window['go']['main']['App']['GetCrushBioInfo']();
+}
+
+export function GetCrushBrowsersOpen() {
+  return window['go']['main']['App']['GetCrushBrowsersOpen']();
+}
+
+export function GetCrushConfig() {
+  return window['go']['main']['App']['GetCrushConfig']();
+}
+
+export function GetCrushDebugInfo() {
+  return window['go']['main']['App']['GetCrushDebugInfo']();
+}
+
+export function GetCrushLogPath() {
+  return window['go']['main']['App']['GetCrushLogPath']();
+}
+
+export function GetCrushLogs(arg1) {
+  return window['go']['main']['App']['GetCrushLogs'](arg1);
+}
+
+export function GetCrushStats() {
+  return window['go']['main']['App']['GetCrushStats']();
+}
+
+export function GetCrushSummary() {
+  return window['go']['main']['App']['GetCrushSummary']();
+}
+
 export function GetInitialState() {
   return window['go']['main']['App']['GetInitialState']();
 }
@@ -26,8 +78,32 @@ export function GetLiveChatSnapshot(arg1) {
   return window['go']['main']['App']['GetLiveChatSnapshot'](arg1);
 }
 
+export function GetLogs(arg1) {
+  return window['go']['main']['App']['GetLogs'](arg1);
+}
+
+export function GetPictureCount() {
+  return window['go']['main']['App']['GetPictureCount']();
+}
+
 export function GetShowModeLog(arg1) {
   return window['go']['main']['App']['GetShowModeLog'](arg1);
+}
+
+export function GetStats() {
+  return window['go']['main']['App']['GetStats']();
+}
+
+export function ImportCrushBioFile(arg1) {
+  return window['go']['main']['App']['ImportCrushBioFile'](arg1);
+}
+
+export function ListAccounts() {
+  return window['go']['main']['App']['ListAccounts']();
+}
+
+export function ListCrushAccounts() {
+  return window['go']['main']['App']['ListCrushAccounts']();
 }
 
 export function ListProfiles() {
@@ -38,8 +114,40 @@ export function LoadMessageFolder() {
   return window['go']['main']['App']['LoadMessageFolder']();
 }
 
+export function OpenCrushLogFolder() {
+  return window['go']['main']['App']['OpenCrushLogFolder']();
+}
+
+export function OpenCrushPicturesFolder() {
+  return window['go']['main']['App']['OpenCrushPicturesFolder']();
+}
+
+export function OpenCrushflingDataFolder() {
+  return window['go']['main']['App']['OpenCrushflingDataFolder']();
+}
+
 export function OpenEVAChatDataFolder() {
   return window['go']['main']['App']['OpenEVAChatDataFolder']();
+}
+
+export function PickCrushBioFile() {
+  return window['go']['main']['App']['PickCrushBioFile']();
+}
+
+export function PickCrushPictureFolder() {
+  return window['go']['main']['App']['PickCrushPictureFolder']();
+}
+
+export function PickCrushProxyFile() {
+  return window['go']['main']['App']['PickCrushProxyFile']();
+}
+
+export function PreviewCrushProfile() {
+  return window['go']['main']['App']['PreviewCrushProfile']();
+}
+
+export function PreviewProfile() {
+  return window['go']['main']['App']['PreviewProfile']();
 }
 
 export function RunBrowser(arg1, arg2) {
@@ -78,8 +186,24 @@ export function StartBot() {
   return window['go']['main']['App']['StartBot']();
 }
 
+export function StartBulk(arg1) {
+  return window['go']['main']['App']['StartBulk'](arg1);
+}
+
+export function StartCrushBulk(arg1) {
+  return window['go']['main']['App']['StartCrushBulk'](arg1);
+}
+
 export function StopBot() {
   return window['go']['main']['App']['StopBot']();
+}
+
+export function StopBulk() {
+  return window['go']['main']['App']['StopBulk']();
+}
+
+export function StopCrushBulk() {
+  return window['go']['main']['App']['StopCrushBulk']();
 }
 
 export function TestEVAChatAI(arg1) {
@@ -88,4 +212,8 @@ export function TestEVAChatAI(arg1) {
 
 export function TestProxyEntries(arg1) {
   return window['go']['main']['App']['TestProxyEntries'](arg1);
+}
+
+export function ValidateCrushProxies(arg1, arg2) {
+  return window['go']['main']['App']['ValidateCrushProxies'](arg1, arg2);
 }
